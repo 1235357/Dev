@@ -101,7 +101,7 @@ class WOLFXLSX(Base):
                             "file_type": CacheItem.FileType.WOLFXLSX,
                             "file_path": rel_path,
                             "text_type": CacheItem.TextType.WOLF,
-                            "status": Base.TranslationStatus.TRANSLATED_IN_PAST,
+                            "status": Base.TranslationStatus.PROCESSED_IN_PAST,
                         })
                     )
                 else:
@@ -113,7 +113,7 @@ class WOLFXLSX(Base):
                             "file_type": CacheItem.FileType.WOLFXLSX,
                             "file_path": rel_path,
                             "text_type": CacheItem.TextType.WOLF,
-                            "status": Base.TranslationStatus.UNTRANSLATED,
+                            "status": Base.TranslationStatus.NONE,
                         })
                     )
 

@@ -105,6 +105,17 @@ class ResponseChecker(Base):
         kana_count = sum(1 for c in text if TextHelper.JA.hiragana(c) or TextHelper.JA.katakana(c))
         return kana_count / len(text)
 
+    # 统计平假名/片假名数量
+    def count_kana(self, text: str) -> tuple[int, int, int]:
+        hiragana_count = 0
+        katakana_count = 0
+        for c in text:
+            if TextHelper.JA.hiragana(c):
+                hiragana_count += 1
+            elif TextHelper.JA.katakana(c):
+                katakana_count += 1
+        return hiragana_count, katakana_count, hiragana_count + katakana_count
+
     # 逐行检查错误
     def check_lines(self, srcs: list[str], dsts: list[str], text_type: CacheItem.TextType) -> list[Error]:
         checks: list[__class__.Error] = []
@@ -159,10 +170,13 @@ class ResponseChecker(Base):
             # 当原文语言为日语，且译文中包含平假名或片假名字符时，判断为 假名残留
             if self.config.source_language == BaseLanguage.Enum.JA and (TextHelper.JA.any_hiragana(dst) or TextHelper.JA.any_katakana(dst)):
                 # 针对阿里百炼 DeepSeek 模型：假名残留占比 <= KANA_TOLERANCE_RATIO 时予以容忍
+                # 注：像「コ」字形这类形状描述符是合理保留，占比极低，应予以放过
                 if self.is_dashscope_deepseek():
                     kana_ratio = self.calculate_kana_ratio(dst)
                     if kana_ratio <= __class__.KANA_TOLERANCE_RATIO:
-                        self.warning(f"[阿里百炼DeepSeek容错] 假名残留比例 {kana_ratio:.1%} <= {__class__.KANA_TOLERANCE_RATIO:.0%}，予以容忍 (可能是人名或语气词)")
+                        self.warning(
+                            f"[阿里百炼DeepSeek容错] 假名占比={kana_ratio:.1%} <= {__class__.KANA_TOLERANCE_RATIO:.0%}，予以容忍"
+                        )
                         checks.append(__class__.Error.NONE)
                         continue
                 checks.append(__class__.Error.LINE_ERROR_KANA)

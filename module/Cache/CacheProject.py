@@ -9,7 +9,7 @@ from base.Base import Base
 class CacheProject():
 
     id: str = ""                                                                        # 项目 ID
-    status: Base.TranslationStatus = Base.TranslationStatus.UNTRANSLATED                # 翻译状态
+    status: Base.TranslationStatus = Base.TranslationStatus.NONE                # 翻译状态
     extras: dict = dataclasses.field(default_factory = dict)                            # 额外数据
 
     # 线程锁

@@ -67,7 +67,7 @@ class KVJSON(Base):
                                     "row": len(items),
                                     "file_type": CacheItem.FileType.KVJSON,
                                     "file_path": rel_path,
-                                    "status": Base.TranslationStatus.TRANSLATED_IN_PAST,
+                                    "status": Base.TranslationStatus.PROCESSED_IN_PAST,
                                 })
                             )
                         else:
@@ -78,7 +78,7 @@ class KVJSON(Base):
                                     "row": len(items),
                                     "file_type": CacheItem.FileType.KVJSON,
                                     "file_path": rel_path,
-                                    "status": Base.TranslationStatus.UNTRANSLATED,
+                                    "status": Base.TranslationStatus.NONE,
                                 })
                             )
 

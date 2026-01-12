@@ -192,7 +192,7 @@ class BatchCorrectionPage(QWidget, Base):
 
         # 有效性检查
         if len(data_dict) == 0:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.ERROR,
                 "message": Localizer.get().alert_no_data,
             })
@@ -237,7 +237,7 @@ class BatchCorrectionPage(QWidget, Base):
         book.save(abs_path)
 
         # 提示
-        self.emit(Base.Event.APP_TOAST_SHOW, {
+        self.emit(Base.Event.TOAST, {
             "type": Base.ToastType.SUCCESS,
             "message": Localizer.get().task_success,
         })
@@ -293,7 +293,7 @@ class BatchCorrectionPage(QWidget, Base):
 
         # 有效性检查
         if len(data_dict) == 0 or len(items) == 0:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.ERROR,
                 "message": Localizer.get().alert_no_data,
             })
@@ -330,7 +330,7 @@ class BatchCorrectionPage(QWidget, Base):
         shutil.rmtree(f"{config.output_folder}/{Localizer.get().path_bilingual}", ignore_errors = True)
 
         # 提示
-        self.emit(Base.Event.APP_TOAST_SHOW, {
+        self.emit(Base.Event.TOAST, {
             "type": Base.ToastType.SUCCESS,
             "message": Localizer.get().task_success,
         })

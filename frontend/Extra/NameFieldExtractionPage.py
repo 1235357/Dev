@@ -147,23 +147,23 @@ class NameFieldExtractionPage(QWidget, Base):
                 "row": len(items) + 1,
                 "file_type": CacheItem.FileType.XLSX,
                 "file_path": Localizer.get().path_result_name_field_extraction,
-                "status": Base.TranslationStatus.UNTRANSLATED,
+                "status": Base.TranslationStatus.NONE,
             }))
 
         # 有效性检查
-        items_lenght = len([v for v in items if v.get_status() == Base.TranslationStatus.UNTRANSLATED])
+        items_lenght = len([v for v in items if v.get_status() == Base.TranslationStatus.NONE])
         if items_lenght == 0:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.ERROR,
                 "message": Localizer.get().alert_no_data,
             })
             return None
 
         # 设置项目数据
-        project.set_status(Base.TranslationStatus.TRANSLATING)
+        project.set_status(Base.TranslationStatus.PROCESSING)
         project.set_extras({
             "start_time": time.time(),
-            "total_line": len([item for item in items if item.get_status() == Base.TranslationStatus.UNTRANSLATED]),
+            "total_line": len([item for item in items if item.get_status() == Base.TranslationStatus.NONE]),
             "line": 0,
             "total_tokens": 0,
             "total_output_tokens": 0,
@@ -178,8 +178,8 @@ class NameFieldExtractionPage(QWidget, Base):
         )
 
         window.switchTo(window.translation_page)
-        self.emit(Base.Event.TRANSLATION_START, {
-            "status": Base.TranslationStatus.TRANSLATING,
+        self.emit(Base.Event.TRANSLATION_RUN, {
+            "status": Base.TranslationStatus.PROCESSING,
         })
 
     # 第二步点击事件
@@ -218,7 +218,7 @@ class NameFieldExtractionPage(QWidget, Base):
 
         # 有效性检查
         if len(names) == 0 or len(items) == 0:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.ERROR,
                 "message": Localizer.get().alert_no_data,
             })
@@ -244,7 +244,7 @@ class NameFieldExtractionPage(QWidget, Base):
         window.switchTo(window.glossary_page)
 
         # 提示
-        self.emit(Base.Event.APP_TOAST_SHOW, {
+        self.emit(Base.Event.TOAST, {
             "type": Base.ToastType.SUCCESS,
             "message": Localizer.get().task_success,
         })

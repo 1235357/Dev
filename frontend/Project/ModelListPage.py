@@ -121,7 +121,7 @@ class ModelListPage(MessageBoxBase, Base):
                 return [model.id for model in client.models.list()]
         except Exception as e:
             self.debug(Localizer.get().model_list_page_fail, e)
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.WARNING,
                 "message": Localizer.get().model_list_page_fail,
             })

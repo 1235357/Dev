@@ -27,9 +27,9 @@ class ResultChecker(Base):
 
         # 筛选数据
         self.items_translated: list[CacheItem] = []
-        self.items_untranslated = [item for item in items if item.get_status() == Base.TranslationStatus.UNTRANSLATED]
+        self.items_untranslated = [item for item in items if item.get_status() == Base.TranslationStatus.NONE]
         for item in items:
-            if item.get_status() == Base.TranslationStatus.TRANSLATED:
+            if item.get_status() == Base.TranslationStatus.PROCESSED:
                 processors = TextProcessor(config, item)
                 processors.pre_process()
                 if len(processors.srcs) > 0:

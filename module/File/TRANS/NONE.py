@@ -38,11 +38,11 @@ class NONE():
             skip_internal_filter: bool = False
         # 如果包含 水蓝色 标签，则翻译
         elif any(v == "aqua" for v in tag):
-            status: str = Base.TranslationStatus.UNTRANSLATED
+            status: str = Base.TranslationStatus.NONE
             skip_internal_filter: bool = True
         # 如果 第一列、第二列 都有文本，则跳过
         elif dst != "" and src != dst:
-            status: str = Base.TranslationStatus.TRANSLATED_IN_PAST
+            status: str = Base.TranslationStatus.PROCESSED_IN_PAST
             skip_internal_filter: bool = False
         else:
             block = self.filter(src, path, tag, context)
@@ -57,7 +57,7 @@ class NONE():
 
             # 如果不需要过滤的数据，则翻译，否则排除
             if any(v == False for v in block):
-                status: str = Base.TranslationStatus.UNTRANSLATED
+                status: str = Base.TranslationStatus.NONE
             else:
                 status: str = Base.TranslationStatus.EXCLUDED
 

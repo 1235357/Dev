@@ -12,12 +12,12 @@ class APITester(Base):
         super().__init__()
 
         # 注册事件
-        self.subscribe(Base.Event.PLATFORM_TEST_START, self.platform_test_start)
+        self.subscribe(Base.Event.APITEST_RUN, self.platform_test_start)
 
     # 接口测试开始事件
     def platform_test_start(self, event: str, data: dict) -> None:
-        if Engine.get().get_status() != Engine.Status.IDLE:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+        if Engine.get().get_status() != Base.TaskStatus.IDLE:
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.WARNING,
                 "message": Localizer.get().platofrm_tester_running,
             })
@@ -30,7 +30,7 @@ class APITester(Base):
     # 接口测试开始
     def platform_test_start_target(self, event: str, data: dict) -> None:
         # 更新运行状态
-        Engine.get().set_status(Engine.Status.TESTING)
+        Engine.get().set_status(Base.TaskStatus.TESTING)
 
         # 加载配置
         config = Config().load()
@@ -97,10 +97,10 @@ class APITester(Base):
             self.warning(Localizer.get().platofrm_tester_result_failure + "\n" + "\n".join(failure))
 
         # 发送完成事件
-        self.emit(Base.Event.PLATFORM_TEST_DONE, {
+        self.emit(Base.Event.APITEST_DONE, {
             "result": len(failure) == 0,
             "result_msg": result_msg,
         })
 
         # 更新运行状态
-        Engine.get().set_status(Engine.Status.IDLE)
+        Engine.get().set_status(Base.TaskStatus.IDLE)

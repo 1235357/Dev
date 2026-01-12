@@ -44,8 +44,8 @@ class VersionManager(Base):
 
         # 注册事件
         self.subscribe(Base.Event.APP_UPDATE_EXTRACT, self.app_update_extract)
-        self.subscribe(Base.Event.APP_UPDATE_CHECK_START, self.app_update_check_start)
-        self.subscribe(Base.Event.APP_UPDATE_DOWNLOAD_START, self.app_update_download_start)
+        self.subscribe(Base.Event.APP_UPDATE_CHECK_RUN, self.app_update_check_start)
+        self.subscribe(Base.Event.APP_UPDATE_DOWNLOAD_RUN, self.app_update_download_start)
 
     @classmethod
     def get(cls) -> Self:
@@ -142,7 +142,7 @@ class VersionManager(Base):
             pass
 
         # 显示提示
-        self.emit(Base.Event.APP_TOAST_SHOW,{
+        self.emit(Base.Event.TOAST,{
             "type": Base.ToastType.SUCCESS,
             "message": Localizer.get().app_new_version_waiting_restart,
             "duration": 60 * 1000,
@@ -170,7 +170,7 @@ class VersionManager(Base):
                 or (int(a) == int(x) and int(b) == int(y) and int(c) < int(z))
             ):
                 self.set_status(VersionManager.Status.NEW_VERSION)
-                self.emit(Base.Event.APP_TOAST_SHOW, {
+                self.emit(Base.Event.TOAST, {
                     "type": Base.ToastType.SUCCESS,
                     "message": Localizer.get().app_new_version_toast.replace("{VERSION}", f"v{x}.{y}.{z}"),
                     "duration": 60 * 1000,
@@ -219,7 +219,7 @@ class VersionManager(Base):
                                 })
                             else:
                                 self.set_status(VersionManager.Status.DOWNLOADED)
-                                self.emit(Base.Event.APP_TOAST_SHOW, {
+                                self.emit(Base.Event.TOAST, {
                                     "type": Base.ToastType.SUCCESS,
                                     "message": Localizer.get().app_new_version_success,
                                     "duration": 60 * 1000,
@@ -227,7 +227,7 @@ class VersionManager(Base):
                                 self.emit(Base.Event.APP_UPDATE_DOWNLOAD_DONE, {})
         except Exception as e:
             self.set_status(VersionManager.Status.NONE)
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.ERROR,
                 "message": Localizer.get().app_new_version_failure + str(e),
                 "duration": 60 * 1000,

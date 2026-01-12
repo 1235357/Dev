@@ -71,7 +71,7 @@ class XLSX(Base):
                             "row": row,
                             "file_type": CacheItem.FileType.XLSX,
                             "file_path": rel_path,
-                            "status": Base.TranslationStatus.TRANSLATED_IN_PAST,
+                            "status": Base.TranslationStatus.PROCESSED_IN_PAST,
                         })
                     )
                 else:
@@ -82,7 +82,7 @@ class XLSX(Base):
                             "row": row,
                             "file_type": CacheItem.FileType.XLSX,
                             "file_path": rel_path,
-                            "status": Base.TranslationStatus.UNTRANSLATED,
+                            "status": Base.TranslationStatus.NONE,
                         })
                     )
 

@@ -40,15 +40,15 @@ class Translator(Base):
         self.data_lock = threading.Lock()
 
         # 注册事件
-        self.subscribe(Base.Event.TRANSLATION_STOP, self.translation_stop)
-        self.subscribe(Base.Event.TRANSLATION_START, self.translation_start)
-        self.subscribe(Base.Event.TRANSLATION_MANUAL_EXPORT, self.translation_manual_export)
-        self.subscribe(Base.Event.PROJECT_STATUS, self.translation_project_status_check)
+        self.subscribe(Base.Event.TRANSLATION_REQUIRE_STOP, self.translation_stop)
+        self.subscribe(Base.Event.TRANSLATION_RUN, self.translation_start)
+        self.subscribe(Base.Event.TRANSLATION_EXPORT, self.translation_manual_export)
+        self.subscribe(Base.Event.PROJECT_CHECK_RUN, self.translation_project_status_check)
 
     # 翻译停止事件
     def translation_stop(self, event: str, data: dict) -> None:
         # 更新运行状态
-        Engine.get().set_status(Engine.Status.STOPPING)
+        Engine.get().set_status(Base.TaskStatus.STOPPING)
 
         def task(event: str, data: dict) -> None:
             while True:
@@ -71,33 +71,33 @@ class Translator(Base):
                     self.print("")
 
                     # 通知
-                    self.emit(Base.Event.APP_TOAST_SHOW, {
+                    self.emit(Base.Event.TOAST, {
                         "type": Base.ToastType.SUCCESS,
                         "message": Localizer.get().translator_stop,
                     })
 
                     # 更新运行状态
-                    Engine.get().set_status(Engine.Status.IDLE)
+                    Engine.get().set_status(Base.TaskStatus.IDLE)
                     self.emit(Base.Event.TRANSLATION_DONE, {})
                     break
         threading.Thread(target = task, args = (event, data)).start()
 
     # 翻译开始事件
     def translation_start(self, event: str, data: dict) -> None:
-        if Engine.get().get_status() == Engine.Status.IDLE:
+        if Engine.get().get_status() == Base.TaskStatus.IDLE:
             threading.Thread(
                 target = self.translation_start_task,
                 args = (event, data),
             ).start()
         else:
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.WARNING,
                 "message": Localizer.get().translator_running,
             })
 
     # 翻译结果手动导出事件
     def translation_manual_export(self, event: str, data: dict) -> None:
-        if Engine.get().get_status() != Engine.Status.TRANSLATING:
+        if Engine.get().get_status() != Base.TaskStatus.TRANSLATING:
             return None
 
         # 复制一份以避免影响原始数据
@@ -111,14 +111,14 @@ class Translator(Base):
     def translation_project_status_check(self, event: str, data: dict) -> None:
 
         def task(event: str, data: dict) -> None:
-            if Engine.get().get_status() != Engine.Status.IDLE:
-                status = Base.TranslationStatus.UNTRANSLATED
+            if Engine.get().get_status() != Base.TaskStatus.IDLE:
+                status = Base.TranslationStatus.NONE
             else:
                 cache_manager = CacheManager(service = False)
                 cache_manager.load_project_from_file(Config().load().output_folder)
                 status = cache_manager.get_project().get_status()
 
-            self.emit(Base.Event.PROJECT_STATUS_CHECK_DONE, {
+            self.emit(Base.Event.PROJECT_CHECK_DONE, {
                 "status" : status,
             })
         threading.Thread(target = task, args = (event, data)).start()
@@ -129,7 +129,7 @@ class Translator(Base):
         status: Base.TranslationStatus = data.get("status")
 
         # 更新运行状态
-        Engine.get().set_status(Engine.Status.TRANSLATING)
+        Engine.get().set_status(Base.TaskStatus.TRANSLATING)
 
         # 初始化
         self.config = config if isinstance(config, Config) else Config().load()
@@ -145,7 +145,7 @@ class Translator(Base):
         # 生成缓存列表
         try:
             # 根据 status 判断是否为继续翻译
-            if status == Base.TranslationStatus.TRANSLATING:
+            if status == Base.TranslationStatus.PROCESSING:
                 self.cache_manager.load_from_file(self.config.output_folder)
             else:
                 shutil.rmtree(f"{self.config.output_folder}/cache", ignore_errors = True)
@@ -159,16 +159,16 @@ class Translator(Base):
         # 检查数据是否为空
         if self.cache_manager.get_item_count() == 0:
             # 通知
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.WARNING,
                 "message": Localizer.get().translator_no_items,
             })
 
-            self.emit(Base.Event.TRANSLATION_STOP, {})
+            self.emit(Base.Event.TRANSLATION_REQUIRE_STOP, {})
             return None
 
         # 从头翻译时加载默认数据
-        if status == Base.TranslationStatus.TRANSLATING:
+        if status == Base.TranslationStatus.PROCESSING:
             self.extras = self.cache_manager.get_project().get_extras()
             self.extras["start_time"] = time.time() - self.extras.get("time", 0)
         else:
@@ -197,12 +197,12 @@ class Translator(Base):
         for current_round in range(self.config.max_round):
             # 检测是否需要停止任务
             # 目的是避免用户正好在两轮之间停止任务
-            if Engine.get().get_status() == Engine.Status.STOPPING:
+            if Engine.get().get_status() == Base.TaskStatus.STOPPING:
                 return None
 
             # 第一轮且不是继续翻译时，记录任务的总行数
-            if current_round == 0 and status == Base.TranslationStatus.UNTRANSLATED:
-                self.extras["total_line"] = self.cache_manager.get_item_count_by_status(Base.TranslationStatus.UNTRANSLATED)
+            if current_round == 0 and status == Base.TranslationStatus.NONE:
+                self.extras["total_line"] = self.cache_manager.get_item_count_by_status(Base.TranslationStatus.NONE)
 
             # 第二轮开始切分
             if current_round > 0:
@@ -252,7 +252,7 @@ class Translator(Base):
                     for task in tasks:
                         # 检测是否需要停止任务
                         # 目的是绕过限流器，快速结束所有剩余任务
-                        if Engine.get().get_status() == Engine.Status.STOPPING:
+                        if Engine.get().get_status() == Base.TaskStatus.STOPPING:
                             return None
 
                         task_limiter.wait()
@@ -260,8 +260,8 @@ class Translator(Base):
                         future.add_done_callback(lambda future: self.task_done_callback(future, pid, progress))
 
             # 判断是否需要继续翻译
-            if self.cache_manager.get_item_count_by_status(Base.TranslationStatus.UNTRANSLATED) == 0:
-                self.cache_manager.get_project().set_status(Base.TranslationStatus.TRANSLATED)
+            if self.cache_manager.get_item_count_by_status(Base.TranslationStatus.NONE) == 0:
+                self.cache_manager.get_project().set_status(Base.TranslationStatus.PROCESSED)
 
                 # 日志
                 self.print("")
@@ -270,7 +270,7 @@ class Translator(Base):
                 self.print("")
 
                 # 通知
-                self.emit(Base.Event.APP_TOAST_SHOW, {
+                self.emit(Base.Event.TOAST, {
                     "type": Base.ToastType.SUCCESS,
                     "message": Localizer.get().translator_done,
                 })
@@ -285,7 +285,7 @@ class Translator(Base):
                 self.print("")
 
                 # 通知
-                self.emit(Base.Event.APP_TOAST_SHOW, {
+                self.emit(Base.Event.TOAST, {
                     "type": Base.ToastType.SUCCESS,
                     "message": Localizer.get().translator_fail,
                 })
@@ -308,7 +308,7 @@ class Translator(Base):
         self.check_and_wirte_result(self.cache_manager.get_items())
 
         # 重置内部状态（正常完成翻译）
-        Engine.get().set_status(Engine.Status.IDLE)
+        Engine.get().set_status(Base.TaskStatus.IDLE)
 
         # 触发翻译停止完成的事件
         self.emit(Base.Event.TRANSLATION_DONE, {})
@@ -321,6 +321,21 @@ class Translator(Base):
             flags = re.IGNORECASE,
         ) is not None
 
+    # 获取 llama.cpp slots 探测地址（仅本地服务）
+    def get_slots_probe_url(self) -> str | None:
+        api_url = (self.platform.get("api_url") or "").strip()
+        if api_url == "":
+            return None
+
+        # /slots 仅用于本地 llama.cpp；对 ModelScope/OpenAI 等远程接口探测会产生 404 噪音
+        if self.initialize_local_flag() == False:
+            return None
+
+        # 规范化：去掉末尾斜杠，并去掉 /v1（兼容 /v1 与 /v1/）
+        base = api_url.rstrip("/")
+        base = re.sub(r"/v1$", "", base, flags = re.IGNORECASE)
+        return base + "/slots"
+
     # 初始化速度控制器
     def initialize_max_workers(self) -> tuple[int, int]:
         max_workers: int = self.config.max_workers
@@ -330,9 +345,11 @@ class Translator(Base):
         if max_workers == 0:
             try:
                 response_json = None
-                response = httpx.get(re.sub(r"/v1$", "", self.platform.get("api_url")) + "/slots")
-                response.raise_for_status()
-                response_json = response.json()
+                slots_url = self.get_slots_probe_url()
+                if slots_url is not None:
+                    response = httpx.get(slots_url, timeout = 5.0)
+                    response.raise_for_status()
+                    response_json = response.json()
             except Exception as e:
                 self.print("")
                 self.debug("", e)
@@ -513,7 +530,7 @@ class Translator(Base):
             self.cache_manager.get_project().set_extras(self.extras)
 
             # 更新翻译状态
-            self.cache_manager.get_project().set_status(Base.TranslationStatus.TRANSLATING)
+            self.cache_manager.get_project().set_status(Base.TranslationStatus.PROCESSING)
 
             # 请求保存缓存文件
             self.cache_manager.require_save_to_file(self.config.output_folder)

@@ -93,7 +93,7 @@ class TRANS(Base):
             # 去重
             if self.config.deduplication_in_trans == True:
                 translation: dict[str, str] = {}
-                for item in [v for v in items if v.get_status() == Base.TranslationStatus.UNTRANSLATED]:
+                for item in [v for v in items if v.get_status() == Base.TranslationStatus.NONE]:
                     src = item.get_src()
                     dst = item.get_dst()
                     if src not in translation:
@@ -144,7 +144,7 @@ class TRANS(Base):
                     # 去重
                     if self.config.deduplication_in_trans == True:
                         translation: dict[str, str] = {}
-                        for item in [v for v in items if v.get_status() == Base.TranslationStatus.TRANSLATED]:
+                        for item in [v for v in items if v.get_status() == Base.TranslationStatus.PROCESSED]:
                             src = item.get_src()
                             dst = item.get_dst()
                             if src not in translation:
@@ -170,7 +170,7 @@ class TRANS(Base):
                             context.append(extra_field.get("context", []))
 
                             # 当翻译状态为 已排除、过去已翻译 时，直接使用原始参数
-                            if item.get_status() in (Base.TranslationStatus.EXCLUDED, Base.TranslationStatus.TRANSLATED_IN_PAST):
+                            if item.get_status() in (Base.TranslationStatus.EXCLUDED, Base.TranslationStatus.PROCESSED_IN_PAST):
                                 parameters.append(extra_field.get("parameter", []))
                             # 否则，判断与计算分区翻译功能参数
                             else:

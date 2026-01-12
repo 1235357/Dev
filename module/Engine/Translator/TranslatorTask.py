@@ -64,7 +64,7 @@ class TranslatorTask(Base):
         if len(srcs) == 0:
             for item, processor in zip(items, processors):
                 item.set_dst(item.get_src())
-                item.set_status(Base.TranslationStatus.TRANSLATED)
+                item.set_status(Base.TranslationStatus.PROCESSED)
 
             return {
                 "row_count": len(items),
@@ -135,7 +135,7 @@ class TranslatorTask(Base):
                     name, dst = processor.post_process(dsts_ex)
                     item.set_dst(dst)
                     item.set_first_name_dst(name) if name is not None else None
-                    item.set_status(Base.TranslationStatus.TRANSLATED)
+                    item.set_status(Base.TranslationStatus.PROCESSED)
                     updated_count = updated_count + 1
 
         # 打印任务结果

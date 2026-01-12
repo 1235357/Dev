@@ -68,12 +68,10 @@ class TaskRequester(Base):
             key = "no_key_required"
         elif len(keys) == 1:
             key = keys[0]
-        elif cls.API_KEY_INDEX >= len(keys) - 1:
-            key = keys[0]
-            cls.API_KEY_INDEX = 0
         else:
-            key = keys[cls.API_KEY_INDEX]
-            cls.API_KEY_INDEX = cls.API_KEY_INDEX + 1
+            # 修复：使用模运算确保所有 key 都被均匀轮询（包括最后一个）
+            key = keys[cls.API_KEY_INDEX % len(keys)]
+            cls.API_KEY_INDEX = (cls.API_KEY_INDEX + 1) % len(keys)
 
         return key
 

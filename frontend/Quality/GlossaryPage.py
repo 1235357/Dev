@@ -99,7 +99,7 @@ class GlossaryPage(QWidget, Base):
                     continue
 
                 if new.get("src") == old.get("src"):
-                    self.emit(Base.Event.APP_TOAST_SHOW, {
+                    self.emit(Base.Event.TOAST, {
                         "type": Base.ToastType.WARNING,
                         "duration": 5000,
                         "message": (
@@ -120,7 +120,7 @@ class GlossaryPage(QWidget, Base):
             config.save()
 
             # 弹出提示
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.SUCCESS,
                 "message": Localizer.get().quality_save_toast,
             })
@@ -192,7 +192,7 @@ class GlossaryPage(QWidget, Base):
             if row > -1:
                 self.table.setCurrentCell(row, 0)
             else:
-                self.emit(Base.Event.APP_TOAST_SHOW, {
+                self.emit(Base.Event.TOAST, {
                     "type": Base.ToastType.WARNING,
                     "message": Localizer.get().alert_no_data,
                 })
@@ -235,7 +235,7 @@ class GlossaryPage(QWidget, Base):
             config.save()
 
             # 弹出提示
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.SUCCESS,
                 "message": Localizer.get().quality_import_toast,
             })
@@ -252,7 +252,7 @@ class GlossaryPage(QWidget, Base):
             self.table_manager.export(getattr(Localizer.get(), f"path_{__class__.BASE}_export"))
 
             # 弹出提示
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.SUCCESS,
                 "message": Localizer.get().quality_export_toast,
             })
@@ -307,7 +307,7 @@ class GlossaryPage(QWidget, Base):
             config.save()
 
             # 弹出提示
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.SUCCESS,
                 "message": Localizer.get().quality_reset_toast,
             })
@@ -328,7 +328,7 @@ class GlossaryPage(QWidget, Base):
             config.save()
 
             # 弹出提示
-            self.emit(Base.Event.APP_TOAST_SHOW, {
+            self.emit(Base.Event.TOAST, {
                 "type": Base.ToastType.SUCCESS,
                 "message": Localizer.get().quality_import_toast,
             })

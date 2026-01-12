@@ -73,7 +73,7 @@ class CacheManager(Base):
                 )
 
                 # 触发事件
-                self.emit(Base.Event.CACHE_FILE_AUTO_SAVE, {})
+                self.emit(Base.Event.CACHE_SAVE, {})
 
                 # 重置标志
                 self.require_flag = False
@@ -179,7 +179,7 @@ class CacheManager(Base):
         preceding_chunks: list[list[CacheItem]] = []
         for i, item in enumerate(self.items):
             # 跳过状态不是 未翻译 的数据
-            if item.get_status() != Base.TranslationStatus.UNTRANSLATED:
+            if item.get_status() != Base.TranslationStatus.NONE:
                 skip = skip + 1
                 continue
 

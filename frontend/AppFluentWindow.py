@@ -80,14 +80,14 @@ class AppFluentWindow(FluentWindow, Base):
         self.add_pages()
 
         # 注册事件
-        self.subscribe(Base.Event.APP_TOAST_SHOW, self.show_toast)
+        self.subscribe(Base.Event.TOAST, self.show_toast)
         self.subscribe(Base.Event.APP_UPDATE_CHECK_DONE, self.app_update_check_done)
         self.subscribe(Base.Event.APP_UPDATE_DOWNLOAD_DONE, self.app_update_download_done)
         self.subscribe(Base.Event.APP_UPDATE_DOWNLOAD_ERROR, self.app_update_download_error)
         self.subscribe(Base.Event.APP_UPDATE_DOWNLOAD_UPDATE, self.app_update_download_update)
 
         # 检查更新
-        QTimer.singleShot(3000, lambda: self.emit(Base.Event.APP_UPDATE_CHECK_START, {}))
+        QTimer.singleShot(3000, lambda: self.emit(Base.Event.APP_UPDATE_CHECK_RUN, {}))
 
     # 重写窗口关闭函数
     def closeEvent(self, event: QEvent) -> None:
@@ -155,7 +155,7 @@ class AppFluentWindow(FluentWindow, Base):
             config.app_language = BaseLanguage.Enum.EN
             config.save()
 
-        self.emit(Base.Event.APP_TOAST_SHOW, {
+        self.emit(Base.Event.TOAST, {
             "type": Base.ToastType.SUCCESS,
             "message": Localizer.get().switch_language_toast,
         })
@@ -169,7 +169,7 @@ class AppFluentWindow(FluentWindow, Base):
             )
 
             # 触发下载事件
-            self.emit(Base.Event.APP_UPDATE_DOWNLOAD_START, {})
+            self.emit(Base.Event.APP_UPDATE_DOWNLOAD_RUN, {})
         elif VersionManager.get().get_status() == VersionManager.Status.UPDATING:
             pass
         elif VersionManager.get().get_status() == VersionManager.Status.DOWNLOADED:

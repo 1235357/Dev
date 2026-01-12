@@ -119,7 +119,7 @@ class RENPY(Base):
                             "file_type": CacheItem.FileType.RENPY,
                             "file_path": rel_path,
                             "text_type": CacheItem.TextType.RENPY,
-                            "status": Base.TranslationStatus.TRANSLATED_IN_PAST,
+                            "status": Base.TranslationStatus.PROCESSED_IN_PAST,
                         })
                     )
                 else:
@@ -140,7 +140,7 @@ class RENPY(Base):
                             "file_type": CacheItem.FileType.RENPY,
                             "file_path": rel_path,
                             "text_type": CacheItem.TextType.RENPY,
-                            "status": Base.TranslationStatus.UNTRANSLATED,
+                            "status": Base.TranslationStatus.NONE,
                         })
                     )
 

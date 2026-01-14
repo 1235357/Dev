@@ -25,6 +25,8 @@ from module.Localizer.Localizer import Localizer
 from module.ProgressBar import ProgressBar
 from module.PromptBuilder import PromptBuilder
 from module.ResultChecker import ResultChecker
+from module.StreamingStats import StreamingStats
+from module.TaskTracker import TaskTracker, set_current_tracker, get_current_tracker
 from module.TextProcessor import TextProcessor
 
 # 翻译器
@@ -246,18 +248,45 @@ class Translator(Base):
 
             # 开始执行翻译任务
             task_limiter = TaskLimiter(rps = max_workers, rpm = rpm_threshold)
-            with ProgressBar(transient = True) as progress:
+            
+            # 启用流式统计追踪
+            from module.StreamingStats import StreamingStats
+            StreamingStats.reset()
+            StreamingStats.enable(total = len(tasks))
+            
+            # 创建 TaskTracker：底部常驻动态进度条
+            tracker = TaskTracker(
+                total=len(tasks), 
+                task_name=f"第 {current_round + 1} 轮翻译",
+                max_concurrent=max_workers,
+            )
+            tracker.retry_round = current_round  # 同步当前轮次
+            set_current_tracker(tracker)
+            
+            with tracker:
                 with concurrent.futures.ThreadPoolExecutor(max_workers = max_workers, thread_name_prefix = Engine.TASK_PREFIX) as executor:
-                    pid = progress.new()
-                    for task in tasks:
+                    for i, task in enumerate(tasks):
                         # 检测是否需要停止任务
                         # 目的是绕过限流器，快速结束所有剩余任务
                         if Engine.get().get_status() == Base.TaskStatus.STOPPING:
+                            set_current_tracker(None)
                             return None
 
                         task_limiter.wait()
+                        
+                        # 开始任务追踪
+                        task_id = f"task_{i}"
+                        tracker.start_task(task_id, description=f"任务 {i+1}")
+                        
                         future = executor.submit(task.start, current_round)
-                        future.add_done_callback(lambda future: self.task_done_callback(future, pid, progress))
+                        # 将 task_id 绑定到回调中
+                        future.add_done_callback(lambda f, tid=task_id: self.task_done_callback_with_tracker(f, tid, tracker))
+            
+            # 结束本轮任务追踪
+            set_current_tracker(None)
+
+            # 禁用流式统计追踪（本轮结束）
+            StreamingStats.disable()
 
             # 判断是否需要继续翻译
             if self.cache_manager.get_item_count_by_status(Base.TranslationStatus.NONE) == 0:
@@ -293,6 +322,15 @@ class Translator(Base):
 
         # 等待回调执行完毕
         time.sleep(1.0)
+
+        # 禁用流式统计并输出最终报告
+        if StreamingStats.is_enabled():
+            # 获取统计信息判断是否有流式请求
+            stats = StreamingStats.get_stats()
+            if stats["completed"] > 0:
+                self.print("")
+                self.info(StreamingStats.get_final_report())
+            StreamingStats.disable()
 
         # MTool 优化器后处理
         self.mtool_optimizer_postprocess(self.cache_manager.get_items())
@@ -545,4 +583,70 @@ class Translator(Base):
             # 触发翻译进度更新事件
             self.emit(Base.Event.TRANSLATION_UPDATE, self.extras)
         except Exception as e:
+            self.error(f"{Localizer.get().log_task_fail}", e)
+
+    # 翻译任务完成时（带 TaskTracker 版本）
+    def task_done_callback_with_tracker(self, future: concurrent.futures.Future, task_id: str, tracker: TaskTracker) -> None:
+        try:
+            # 获取结果
+            result = future.result()
+
+            # 结果为空则跳过后续的更新步骤
+            if not isinstance(result, dict) or len(result) == 0:
+                # 任务失败（无结果）
+                tracker.complete_task(task_id, success=False, error="空结果")
+                return
+
+            # 记录数据
+            input_tokens = result.get("input_tokens", 0)
+            output_tokens = result.get("output_tokens", 0)
+            has_warning = result.get("warning", False)
+            
+            with self.data_lock:
+                new = {}
+                new["start_time"] = self.extras.get("start_time", 0)
+                new["total_line"] = self.extras.get("total_line", 0)
+                new["line"] = self.extras.get("line", 0) + result.get("row_count", 0)
+                new["total_tokens"] = self.extras.get("total_tokens", 0) + input_tokens + output_tokens
+                new["total_output_tokens"] = self.extras.get("total_output_tokens", 0) + output_tokens
+                new["time"] = time.time() - self.extras.get("start_time", 0)
+                self.extras = new
+
+            # 更新翻译进度
+            self.cache_manager.get_project().set_extras(self.extras)
+
+            # 更新翻译状态
+            self.cache_manager.get_project().set_status(Base.TranslationStatus.PROCESSING)
+
+            # 请求保存缓存文件
+            self.cache_manager.require_save_to_file(self.config.output_folder)
+
+            # 判断任务是否失败
+            is_failed = result.get("failed", False)
+            fail_reason = result.get("fail_reason", "")
+            
+            # 更新 TaskTracker（区分成功、警告和失败）
+            if is_failed:
+                tracker.complete_task(
+                    task_id, 
+                    success=False,
+                    error=fail_reason,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
+            else:
+                tracker.complete_task(
+                    task_id, 
+                    success=True,
+                    warning=has_warning,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
+
+            # 触发翻译进度更新事件
+            self.emit(Base.Event.TRANSLATION_UPDATE, self.extras)
+        except Exception as e:
+            # 任务失败
+            error_msg = str(e)[:50] if e else "未知错误"
+            tracker.complete_task(task_id, success=False, error=error_msg)
             self.error(f"{Localizer.get().log_task_fail}", e)

@@ -2,6 +2,8 @@ import os
 import random
 from datetime import datetime
 
+import opencc
+
 from base.Base import Base
 from module.Cache.CacheItem import CacheItem
 from module.Cache.CacheProject import CacheProject
@@ -20,6 +22,24 @@ from module.File.XLSX import XLSX
 from module.Localizer.Localizer import Localizer
 
 class FileManager(Base):
+
+    # OpenCC 转换器（类级别，延迟加载）
+    _opencc_t2s: opencc.OpenCC = None  # 繁体转简体
+    _opencc_s2t: opencc.OpenCC = None  # 简体转繁体
+
+    @classmethod
+    def get_opencc_t2s(cls) -> opencc.OpenCC:
+        """获取繁体转简体转换器（延迟加载）"""
+        if cls._opencc_t2s is None:
+            cls._opencc_t2s = opencc.OpenCC("t2s")  # 繁体到简体
+        return cls._opencc_t2s
+
+    @classmethod
+    def get_opencc_s2t(cls) -> opencc.OpenCC:
+        """获取简体转繁体转换器（延迟加载）"""
+        if cls._opencc_s2t is None:
+            cls._opencc_s2t = opencc.OpenCC("s2tw")  # 简体到台湾繁体
+        return cls._opencc_s2t
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -62,6 +82,30 @@ class FileManager(Base):
     # 写
     def write_to_path(self, items: list[CacheItem]) -> None:
         try:
+            # ========== 繁简转换预处理 ==========
+            # 在写入所有文件之前，统一进行繁简转换（只转换一次）
+            if getattr(self.config, 'simplified_chinese_enable', False):
+                # 繁体转简体
+                converter = FileManager.get_opencc_t2s()
+                converted_count = 0
+                for item in items:
+                    dst = item.get_dst()
+                    if dst:
+                        item.set_dst(converter.convert(dst))
+                        converted_count += 1
+                self.info(f"[繁简转换] 已将 {converted_count} 条译文从繁体转换为简体")
+            elif getattr(self.config, 'traditional_chinese_enable', False):
+                # 简体转繁体
+                converter = FileManager.get_opencc_s2t()
+                converted_count = 0
+                for item in items:
+                    dst = item.get_dst()
+                    if dst:
+                        item.set_dst(converter.convert(dst))
+                        converted_count += 1
+                self.info(f"[繁简转换] 已将 {converted_count} 条译文从简体转换为繁体")
+
+            # ========== 写入各文件格式 ==========
             MD(self.config).write_to_path(items)
             TXT(self.config).write_to_path(items)
             ASS(self.config).write_to_path(items)

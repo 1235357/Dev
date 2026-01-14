@@ -1,4 +1,13 @@
-from datetime import datetime
+"""
+进度条模块
+=========
+
+参考兄弟项目 KeywordGacha 的简洁进度条设计：
+- 描述文字 • 进度条 • 完成/总数 • 已用时间/剩余时间
+
+保留流式统计功能，但以更简洁的方式显示。
+"""
+
 from types import TracebackType
 from typing import Any
 from typing import Self
@@ -9,6 +18,7 @@ from rich.progress import TaskID
 from rich.progress import TextColumn
 from rich.progress import TimeElapsedColumn
 from rich.progress import TimeRemainingColumn
+
 
 class ProgressBar():
 
@@ -24,17 +34,20 @@ class ProgressBar():
 
     def __enter__(self) -> Self:
         if not isinstance(__class__.progress, Progress):
+            # 参考 KeywordGacha 项目的简洁进度条设计
+            # 格式：描述 • 进度条 • 完成/总数 • 已用时间/剩余时间
             __class__.progress = Progress(
-                TextColumn(datetime.now().strftime("[%H:%M:%S]"), style = "log.time"),
-                TextColumn("INFO    ", style = "logging.level.info"),
-                BarColumn(bar_width = None),
+                TextColumn("{task.description}", justify="right"),
                 "•",
-                TextColumn("{task.completed}/{task.total}", justify = "right"),
+                BarColumn(bar_width=None),
+                "•",
+                TextColumn("{task.completed}/{task.total}", justify="right"),
                 "•",
                 TimeElapsedColumn(),
                 "/",
                 TimeRemainingColumn(),
-                transient = self.transient,
+                transient=self.transient,
+                refresh_per_second=4,
             )
             __class__.progress.start()
 

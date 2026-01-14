@@ -9,6 +9,8 @@ from module.Config import Config
 from module.Filter.RuleFilter import RuleFilter
 from module.Filter.LanguageFilter import LanguageFilter
 from module.TextProcessor import TextProcessor
+from module.StreamingStats import StreamingStats
+from module.Response.ResponseDecoder import ResponseDecoder
 
 class ResponseChecker(Base):
 
@@ -50,6 +52,10 @@ class ResponseChecker(Base):
     RE_DASHSCOPE_DEEPSEEK_URL: re.Pattern = re.compile(r"api-inference\.modelscope\.cn", flags = re.IGNORECASE)
     RE_DASHSCOPE_DEEPSEEK_MODEL: re.Pattern = re.compile(r"deepseek-ai", flags = re.IGNORECASE)
 
+    # NVIDIA Build DeepSeek 模型识别
+    RE_NVIDIA_DEEPSEEK_URL: re.Pattern = re.compile(r"integrate\.api\.nvidia\.com", flags = re.IGNORECASE)
+    RE_NVIDIA_DEEPSEEK_MODEL: re.Pattern = re.compile(r"deepseek-ai", flags = re.IGNORECASE)
+
     def __init__(self, config: Config, items: list[CacheItem], platform: dict = None) -> None:
         super().__init__()
 
@@ -67,6 +73,15 @@ class ResponseChecker(Base):
             __class__.RE_DASHSCOPE_DEEPSEEK_MODEL.search(model) is not None
         )
 
+    # 判断是否为 NVIDIA Build DeepSeek 模型
+    def is_nvidia_deepseek(self) -> bool:
+        api_url = self.platform.get("api_url", "")
+        model = self.platform.get("model", "")
+        return (
+            __class__.RE_NVIDIA_DEEPSEEK_URL.search(api_url) is not None and
+            __class__.RE_NVIDIA_DEEPSEEK_MODEL.search(model) is not None
+        )
+
     # 检查
     def check(self, srcs: list[str], dsts: list[str], text_type: CacheItem.TextType) -> tuple[list[str], list[str]]:
         # 数据解析失败
@@ -77,18 +92,30 @@ class ResponseChecker(Base):
         if len(self.items) == 1 and self.items[0].get_retry_count() >= __class__.RETRY_COUNT_THRESHOLD:
             return [__class__.Error.NONE] * len(srcs), dsts
 
-        # 行数检查 - 添加容错机制
+        # 行数检查 - 添加智能对齐机制
         if len(srcs) != len(dsts):
-            # 系统级容错：若译文缺少行数 <= LINE_COUNT_TOLERANCE，自动补空字符串；否则仍判定为行数错误
-            missing_lines = len(srcs) - len(dsts)
-            if 0 < missing_lines <= __class__.LINE_COUNT_TOLERANCE:
-                # 自动补全缺失的行
-                dsts = dsts + [""] * missing_lines
-                self.warning(
-                    f"[行数容错] 译文行数不足，自动补全 {missing_lines} 行空字符串 (原文: {len(srcs)} 行, 译文: {len(dsts) - missing_lines} 行)"
-                )
+            # 首先尝试使用 ResponseDecoder 的智能对齐功能
+            decoder = ResponseDecoder()
+            aligned_dsts = decoder.try_realign_to_sources(dsts, srcs)
+            
+            if len(aligned_dsts) == len(srcs):
+                # 对齐成功
+                dsts = aligned_dsts
+                if decoder.used_line_realignment:
+                    StreamingStats.add_fallback_usage("line_realignment")
             else:
-                return [__class__.Error.FAIL_LINE_COUNT] * len(srcs), dsts
+                # 对齐失败，回退到原有的容错机制
+                missing_lines = len(srcs) - len(dsts)
+                if 0 < missing_lines <= __class__.LINE_COUNT_TOLERANCE:
+                    # 自动补全缺失的行
+                    dsts = dsts + [""] * missing_lines
+                    self.warning(
+                        f"[行数容错] 译文行数不足，自动补全 {missing_lines} 行空字符串 (原文: {len(srcs)} 行, 译文: {len(dsts) - missing_lines} 行)"
+                    )
+                    # 记录兜底策略使用
+                    StreamingStats.add_fallback_usage("line_tolerance")
+                else:
+                    return [__class__.Error.FAIL_LINE_COUNT] * len(srcs), dsts
 
         # 逐行检查
         checks = self.check_lines(srcs, dsts, text_type)
@@ -137,6 +164,8 @@ class ResponseChecker(Base):
                     empty_missing_count += 1
                     tolerated_empty_samples.append((i, src[:40], repr(dst_raw)))
                     # 容忍该行，避免触发整段重试
+                    # 记录兜底策略使用
+                    StreamingStats.add_fallback_usage("empty_tolerance")
                     checks.append(__class__.Error.NONE)
                     continue
                 failed_empty_samples.append((i, src[:40], repr(dst_raw)))
@@ -169,14 +198,17 @@ class ResponseChecker(Base):
 
             # 当原文语言为日语，且译文中包含平假名或片假名字符时，判断为 假名残留
             if self.config.source_language == BaseLanguage.Enum.JA and (TextHelper.JA.any_hiragana(dst) or TextHelper.JA.any_katakana(dst)):
-                # 针对阿里百炼 DeepSeek 模型：假名残留占比 <= KANA_TOLERANCE_RATIO 时予以容忍
+                # 针对阿里百炼 DeepSeek 或 NVIDIA DeepSeek 模型：假名残留占比 <= KANA_TOLERANCE_RATIO 时予以容忍
                 # 注：像「コ」字形这类形状描述符是合理保留，占比极低，应予以放过
-                if self.is_dashscope_deepseek():
+                if self.is_dashscope_deepseek() or self.is_nvidia_deepseek():
                     kana_ratio = self.calculate_kana_ratio(dst)
                     if kana_ratio <= __class__.KANA_TOLERANCE_RATIO:
+                        platform_name = "NVIDIA DeepSeek" if self.is_nvidia_deepseek() else "阿里百炼DeepSeek"
                         self.warning(
-                            f"[阿里百炼DeepSeek容错] 假名占比={kana_ratio:.1%} <= {__class__.KANA_TOLERANCE_RATIO:.0%}，予以容忍"
+                            f"[{platform_name}容错] 假名占比={kana_ratio:.1%} <= {__class__.KANA_TOLERANCE_RATIO:.0%}，予以容忍"
                         )
+                        # 记录兜底策略使用
+                        StreamingStats.add_fallback_usage("kana_tolerance")
                         checks.append(__class__.Error.NONE)
                         continue
                 checks.append(__class__.Error.LINE_ERROR_KANA)

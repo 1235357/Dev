@@ -13,6 +13,7 @@ from base.Base import Base
 from base.VersionManager import VersionManager
 from module.Config import Config
 from module.Localizer.Localizer import Localizer
+from module.TaskTracker import get_current_tracker
 
 class TaskRequester(Base):
 
@@ -39,11 +40,21 @@ class TaskRequester(Base):
     RE_DASHSCOPE_DEEPSEEK_URL: re.Pattern = re.compile(r"api-inference\.modelscope\.cn", flags = re.IGNORECASE)
     RE_DASHSCOPE_DEEPSEEK_MODEL: re.Pattern = re.compile(r"deepseek-ai", flags = re.IGNORECASE)
 
+    # NVIDIA Build DeepSeek 模型识别
+    RE_NVIDIA_DEEPSEEK_URL: re.Pattern = re.compile(r"integrate\.api\.nvidia\.com", flags = re.IGNORECASE)
+    RE_NVIDIA_DEEPSEEK_MODEL: re.Pattern = re.compile(r"deepseek-ai", flags = re.IGNORECASE)
+
     # 正则
     RE_LINE_BREAK: re.Pattern = re.compile(r"\n+")
 
     # 类线程锁
     LOCK: threading.Lock = threading.Lock()
+
+    # 黑名单 Key 集合 - 存储被 API 封禁的 Key
+    BLACKLISTED_KEYS: set[str] = set()
+
+    # 黑名单错误关键词
+    RE_BLACKLIST_ERROR: re.Pattern = re.compile(r"blacklist|banned|suspended|prohibited", flags = re.IGNORECASE)
 
     def __init__(self, config: Config, platform: dict[str, str | bool | int | float | list], current_round: int) -> None:
         super().__init__()
@@ -57,8 +68,27 @@ class TaskRequester(Base):
     @classmethod
     def reset(cls) -> None:
         cls.API_KEY_INDEX: int = 0
+        cls.BLACKLISTED_KEYS.clear()  # 清空黑名单
         cls.get_client.cache_clear()
         cls.get_client_no_timeout.cache_clear()
+
+    # 将 Key 加入黑名单
+    @classmethod
+    def add_to_blacklist(cls, key: str) -> None:
+        with cls.LOCK:
+            cls.BLACKLISTED_KEYS.add(key)
+
+    # 检查 Key 是否在黑名单中
+    @classmethod
+    def is_blacklisted(cls, key: str) -> bool:
+        with cls.LOCK:
+            return key in cls.BLACKLISTED_KEYS
+
+    # 获取可用 Key 数量
+    @classmethod
+    def get_available_key_count(cls, keys: list[str]) -> int:
+        with cls.LOCK:
+            return sum(1 for k in keys if k not in cls.BLACKLISTED_KEYS)
 
     @classmethod
     def get_key(cls, keys: list[str]) -> str:
@@ -68,10 +98,18 @@ class TaskRequester(Base):
             key = "no_key_required"
         elif len(keys) == 1:
             key = keys[0]
+            # 检查单个 Key 是否被封禁
+            if cls.is_blacklisted(key):
+                raise RuntimeError(f"所有 API Key 均已被封禁，无法继续执行任务。请检查 API Key 状态或联系服务提供商。")
         else:
-            # 修复：使用模运算确保所有 key 都被均匀轮询（包括最后一个）
-            key = keys[cls.API_KEY_INDEX % len(keys)]
-            cls.API_KEY_INDEX = (cls.API_KEY_INDEX + 1) % len(keys)
+            # 尝试找到一个未被封禁的 Key
+            available_keys = [k for k in keys if not cls.is_blacklisted(k)]
+            if len(available_keys) == 0:
+                raise RuntimeError(f"所有 API Key 均已被封禁，无法继续执行任务。请检查 API Key 状态或联系服务提供商。")
+            
+            # 在可用 Key 中轮询
+            key = available_keys[cls.API_KEY_INDEX % len(available_keys)]
+            cls.API_KEY_INDEX = (cls.API_KEY_INDEX + 1) % len(available_keys)
 
         return key
 
@@ -163,6 +201,15 @@ class TaskRequester(Base):
             __class__.RE_DASHSCOPE_DEEPSEEK_MODEL.search(model) is not None
         )
 
+    # 判断是否为 NVIDIA Build DeepSeek 模型
+    def is_nvidia_deepseek(self) -> bool:
+        api_url = self.platform.get("api_url", "")
+        model = self.platform.get("model", "")
+        return (
+            __class__.RE_NVIDIA_DEEPSEEK_URL.search(api_url) is not None and
+            __class__.RE_NVIDIA_DEEPSEEK_MODEL.search(model) is not None
+        )
+
     # 发起请求
     def request(self, messages: list[dict]) -> tuple[bool, str, int, int]:
         args: dict[str, float] = {}
@@ -181,6 +228,12 @@ class TaskRequester(Base):
         # 阿里云百炼 DeepSeek 模型使用专门的流式输出方法
         if self.is_dashscope_deepseek():
             skip, response_think, response_result, input_tokens, output_tokens = self.request_dashscope_deepseek_streaming(
+                messages,
+                args,
+            )
+        # NVIDIA Build DeepSeek 模型使用专门的流式输出方法
+        elif self.is_nvidia_deepseek():
+            skip, response_think, response_result, input_tokens, output_tokens = self.request_nvidia_deepseek_streaming(
                 messages,
                 args,
             )
@@ -227,11 +280,13 @@ class TaskRequester(Base):
     # 发起请求
     def request_sakura(self, messages: list[dict[str, str]], thinking: bool, args: dict[str, float]) -> tuple[bool, str, str, int, int]:
         try:
-            # 获取客户端
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            # 获取客户端（使用锁保护 lru_cache）
             with __class__.LOCK:
                 client: openai.OpenAI = __class__.get_client(
                     url = self.platform.get("api_url"),
-                    key = __class__.get_key(self.platform.get("api_key")),
+                    key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
                 )
@@ -300,11 +355,13 @@ class TaskRequester(Base):
     # 发起请求
     def request_openai(self, messages: list[dict[str, str]], thinking: bool, args: dict[str, float]) -> tuple[bool, str, str, int, int]:
         try:
-            # 获取客户端
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            # 获取客户端（使用锁保护 lru_cache）
             with __class__.LOCK:
                 client: openai.OpenAI = __class__.get_client(
                     url = self.platform.get("api_url"),
-                    key = __class__.get_key(self.platform.get("api_key")),
+                    key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
                 )
@@ -390,11 +447,13 @@ class TaskRequester(Base):
     # 发起请求
     def request_google(self, messages: list[dict[str, str]], thinking: bool, args: dict[str, float]) -> tuple[bool, str, int, int]:
         try:
-            # 获取客户端
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            # 获取客户端（使用锁保护 lru_cache）
             with __class__.LOCK:
                 client: genai.Client = __class__.get_client(
                     url = self.platform.get("api_url"),
-                    key = __class__.get_key(self.platform.get("api_key")),
+                    key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
                 )
@@ -465,11 +524,13 @@ class TaskRequester(Base):
     # 发起请求
     def request_anthropic(self, messages: list[dict[str, str]], thinking: bool, args: dict[str, float]) -> tuple[bool, str, str, int, int]:
         try:
-            # 获取客户端
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            # 获取客户端（使用锁保护 lru_cache）
             with __class__.LOCK:
                 client: anthropic.Anthropic = __class__.get_client(
                     url = self.platform.get("api_url"),
-                    key = __class__.get_key(self.platform.get("api_key")),
+                    key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
                 )
@@ -516,7 +577,7 @@ class TaskRequester(Base):
         request_args.update({
             "model": self.platform.get("model"),
             "messages": messages,
-            "max_tokens": max(4 * 1024, self.config.token_threshold),
+            "max_tokens": max(32 * 1024, self.config.token_threshold),  # ModelScope 支持 32768
             "stream": True,  # 强制启用流式输出
             "stream_options": {"include_usage": True},  # 包含 token 使用统计
             "extra_body": {"enable_thinking": True},  # 强制启用思考模式
@@ -528,19 +589,29 @@ class TaskRequester(Base):
 
     # 阿里云百炼 DeepSeek 模型专用流式输出请求
     def request_dashscope_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float]) -> tuple[bool, str, str, int, int]:
+        # 导入流式统计追踪器
+        from module.StreamingStats import StreamingStats
+        
+        # 生成任务 ID 用于追踪
+        task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
+        
+        # 获取当前活跃的 TaskTracker（如果有）
+        tracker = get_current_tracker()
+        
         try:
-            # 获取客户端 - 使用无超时客户端
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            
+            # 开始追踪任务
+            if task_id:
+                StreamingStats.start_task(task_id)
+            
+            # 获取客户端（使用锁保护 lru_cache）
             with __class__.LOCK:
-                current_key = __class__.get_key(self.platform.get("api_key"))
                 client: openai.OpenAI = __class__.get_client_no_timeout(
                     url = self.platform.get("api_url"),
                     key = current_key,
                 )
-
-            # 记录流式输出开始日志
-            api_url = self.platform.get("api_url")
-            model_name = self.platform.get("model")
-            self.info(f"[阿里百炼DeepSeek] 接口: {api_url} | API Key: {current_key[:20]}... | 模型: {model_name} | 阶段: 流式请求开始")
 
             # 发起流式请求
             stream = client.chat.completions.create(
@@ -576,26 +647,271 @@ class TaskRequester(Base):
 
                 # 收集思考内容 (reasoning_content)
                 if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-                    if is_thinking and chunk_count % 50 == 1:  # 每50个chunk记录一次日志避免刷屏
-                        self.info(f"[阿里百炼DeepSeek] 接口: {api_url} | API Key: {current_key[:20]}... | 阶段: 思考中 (已接收 {chunk_count} 个数据块)")
                     response_think += delta.reasoning_content
+                    # 更新追踪器状态
+                    if task_id:
+                        StreamingStats.update_task(
+                            task_id=task_id,
+                            status="thinking",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+                    # 同步更新 TaskTracker
+                    if tracker and task_id:
+                        tracker.update_task(
+                            task_id,
+                            status="thinking",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
 
                 # 收集回复内容 (content)
                 if hasattr(delta, "content") and delta.content is not None:
                     if is_thinking:
-                        # 从思考阶段切换到回复阶段
                         is_thinking = False
-                        self.info(f"[阿里百炼DeepSeek] 接口: {api_url} | API Key: {current_key[:20]}... | 阶段: 思考完成，开始接收回复")
                     response_result += delta.content
+                    # 更新追踪器状态
+                    if task_id:
+                        StreamingStats.update_task(
+                            task_id=task_id,
+                            status="receiving",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+                    # 同步更新 TaskTracker
+                    if tracker and task_id:
+                        tracker.update_task(
+                            task_id,
+                            status="receiving",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
 
-            # 记录流式输出完成日志
-            self.info(f"[阿里百炼DeepSeek] 接口: {api_url} | API Key: {current_key[:20]}... | 阶段: 流式输出完成 | 共接收 {chunk_count} 个数据块 | 输入Token: {input_tokens} | 输出Token: {output_tokens}")
+            # 完成任务追踪
+            if task_id:
+                StreamingStats.complete_task(task_id, success=True)
+                StreamingStats.remove_task(task_id)
 
             # 清理思考内容
             response_think = __class__.RE_LINE_BREAK.sub("\n", response_think.strip())
             response_result = response_result.strip()
 
+        except openai.PermissionDeniedError as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
+            # 403 错误 - 检查是否为黑名单封禁
+            error_msg = str(e)
+            if __class__.RE_BLACKLIST_ERROR.search(error_msg):
+                # 将该 Key 加入黑名单（记录用途）
+                __class__.add_to_blacklist(current_key)
+                self.error(f"")
+                self.error(f"[致命错误] API Key 已被服务商封禁: {current_key[:20]}...")
+                self.error(f"[致命错误] 封禁原因: {error_msg}")
+                self.error(f"[致命错误] 翻译任务已紧急停止！请检查 API Key 状态或联系服务提供商。")
+                self.error(f"")
+                # 立即触发翻译停止事件
+                self.emit(Base.Event.TRANSLATION_STOP, {})
+            else:
+                self.error(f"{Localizer.get().log_task_fail}", e)
+            return True, None, None, None, None
+
+        except RuntimeError as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
+            # 所有 Key 被封禁的异常（理论上不会触发，因为第一个封禁就停止了）
+            self.error(f"[致命] {e}")
+            self.emit(Base.Event.TRANSLATION_STOP, {})
+            return True, None, None, None, None
+
         except Exception as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
+            self.error(f"{Localizer.get().log_task_fail}", e)
+            return True, None, None, None, None
+
+        return False, response_think, response_result, input_tokens, output_tokens
+
+    # 生成 NVIDIA Build DeepSeek 流式请求参数
+    def generate_nvidia_deepseek_args(self, messages: list[dict[str, str]], args: dict[str, float]) -> dict:
+        request_args: dict = args.copy()
+        request_args.update({
+            "model": self.platform.get("model"),
+            "messages": messages,
+            "max_tokens": max(16384, self.config.token_threshold),  # NVIDIA Build 限制 16384
+            "stream": True,  # 强制启用流式输出
+            "stream_options": {"include_usage": True},  # 包含 token 使用统计
+            "extra_body": {"chat_template_kwargs": {"thinking": True}},  # NVIDIA 专用思考模式启用方式
+            "extra_headers": {
+                "User-Agent": f"LinguaGacha/{VersionManager.get().get_version()} (https://github.com/neavo/LinguaGacha)"
+            }
+        })
+        return request_args
+
+    # NVIDIA Build DeepSeek 模型专用流式输出请求
+    def request_nvidia_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float]) -> tuple[bool, str, str, int, int]:
+        # 导入流式统计追踪器
+        from module.StreamingStats import StreamingStats
+        
+        # 生成任务 ID 用于追踪
+        task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
+        
+        # 获取当前活跃的 TaskTracker（如果有）
+        tracker = get_current_tracker()
+        
+        try:
+            # 获取密钥（不在锁内，避免死锁）
+            current_key = __class__.get_key(self.platform.get("api_key"))
+            
+            # 开始追踪任务
+            if task_id:
+                StreamingStats.start_task(task_id)
+            
+            # 获取客户端（使用锁保护 lru_cache）
+            with __class__.LOCK:
+                client: openai.OpenAI = __class__.get_client_no_timeout(
+                    url = self.platform.get("api_url"),
+                    key = current_key,
+                )
+
+            # 发起流式请求
+            stream = client.chat.completions.create(
+                **self.generate_nvidia_deepseek_args(messages, args)
+            )
+
+            # 收集流式输出内容
+            response_think = ""  # 思考过程
+            response_result = ""  # 完整回复
+            input_tokens = 0
+            output_tokens = 0
+            is_thinking = True  # 当前是否在思考阶段
+            chunk_count = 0
+
+            for chunk in stream:
+                chunk_count += 1
+
+                # 检查是否有选择内容
+                if not chunk.choices:
+                    # 最后一个 chunk 包含 usage 信息
+                    if hasattr(chunk, "usage") and chunk.usage is not None:
+                        try:
+                            input_tokens = int(chunk.usage.prompt_tokens)
+                        except Exception:
+                            pass
+                        try:
+                            output_tokens = int(chunk.usage.completion_tokens)
+                        except Exception:
+                            pass
+                    continue
+
+                delta = chunk.choices[0].delta
+
+                # 收集思考内容 (reasoning_content)
+                if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                    response_think += delta.reasoning_content
+                    # 更新追踪器状态
+                    if task_id:
+                        StreamingStats.update_task(
+                            task_id=task_id,
+                            status="thinking",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+                    # 同步更新 TaskTracker
+                    if tracker and task_id:
+                        tracker.update_task(
+                            task_id,
+                            status="thinking",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+
+                # 收集回复内容 (content)
+                if hasattr(delta, "content") and delta.content is not None:
+                    if is_thinking:
+                        is_thinking = False
+                    response_result += delta.content
+                    # 更新追踪器状态
+                    if task_id:
+                        StreamingStats.update_task(
+                            task_id=task_id,
+                            status="receiving",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+                    # 同步更新 TaskTracker
+                    if tracker and task_id:
+                        tracker.update_task(
+                            task_id,
+                            status="receiving",
+                            think_chars=len(response_think),
+                            reply_chars=len(response_result),
+                            chunks=chunk_count,
+                        )
+
+            # 完成任务追踪
+            if task_id:
+                StreamingStats.complete_task(task_id, success=True)
+                StreamingStats.remove_task(task_id)
+
+            # 清理思考内容
+            response_think = __class__.RE_LINE_BREAK.sub("\n", response_think.strip())
+            response_result = response_result.strip()
+
+        except openai.PermissionDeniedError as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
+            # 403 错误 - 检查是否为黑名单封禁
+            error_msg = str(e)
+            if __class__.RE_BLACKLIST_ERROR.search(error_msg):
+                # 将该 Key 加入黑名单（记录用途）
+                __class__.add_to_blacklist(current_key)
+                self.error(f"")
+                self.error(f"[致命错误] API Key 已被服务商封禁: {current_key[:20]}...")
+                self.error(f"[致命错误] 封禁原因: {error_msg}")
+                self.error(f"[致命错误] 翻译任务已紧急停止！请检查 API Key 状态或联系服务提供商。")
+                self.error(f"")
+                # 立即触发翻译停止事件
+                self.emit(Base.Event.TRANSLATION_STOP, {})
+            else:
+                self.error(f"{Localizer.get().log_task_fail}", e)
+            return True, None, None, None, None
+
+        except RuntimeError as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
+            # 所有 Key 被封禁的异常
+            self.error(f"[致命] {e}")
+            self.emit(Base.Event.TRANSLATION_STOP, {})
+            return True, None, None, None, None
+
+        except Exception as e:
+            # 完成任务追踪（失败）
+            if task_id:
+                StreamingStats.complete_task(task_id, success=False, error=str(e))
+                StreamingStats.remove_task(task_id)
+            
             self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
 

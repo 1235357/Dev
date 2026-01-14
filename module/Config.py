@@ -57,6 +57,7 @@ class Config():
     output_folder: str = "./output"
     output_folder_open_on_finish: bool = False
     traditional_chinese_enable: bool = False
+    simplified_chinese_enable: bool = False  # 繁体转简体（最终输出时）
 
     # GlossaryPage
     glossary_enable: bool = True

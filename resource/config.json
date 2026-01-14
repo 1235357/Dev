@@ -1,15 +1,14 @@
 {
     "theme": "DARK",
     "app_language": "ZH",
-    "activate_platform": 1,
+    "activate_platform": 7,
     "platforms": [
         {
             "id": 0,
             "name": "魔塔-DeepSeek-R1-0528",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-    
-	
+
             ],
             "api_format": "OpenAI",
             "model": "deepseek-ai/DeepSeek-R1-0528",
@@ -24,8 +23,7 @@
             "name": "魔塔-DeepSeek-V3.2",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-           
-		   
+
             ],
             "api_format": "OpenAI",
             "model": "deepseek-ai/DeepSeek-V3.2",
@@ -40,8 +38,7 @@
             "name": "魔塔-DeepSeek-V3.1",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-            
-			
+
             ],
             "api_format": "OpenAI",
             "model": "deepseek-ai/DeepSeek-V3.1",
@@ -56,8 +53,7 @@
             "name": "魔塔-DeepSeek-V3.2-Exp",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-             
-			 
+
             ],
             "api_format": "OpenAI",
             "model": "deepseek-ai/DeepSeek-V3.2-Exp",
@@ -72,8 +68,7 @@
             "name": "魔塔-Qwen3-Next-80B-A3B-Instruct",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-           
-		   
+
             ],
             "api_format": "OpenAI",
             "model": "Qwen/Qwen3-Next-80B-A3B-Instruct",
@@ -88,8 +83,7 @@
             "name": "魔塔-GLM-4.7",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
-              
-			  
+
             ],
             "api_format": "OpenAI",
             "model": "ZhipuAI/GLM-4.7",
@@ -104,10 +98,25 @@
             "name": "智谱-GLM-4.6V-Flash",
             "api_url": "https://open.bigmodel.cn/api/paas/v4",
             "api_key": [
-                "0d216acbbaea857900f5964e8869375b.LYjkb7VFAGRZKwHa"
+
             ],
             "api_format": "OpenAI",
             "model": "glm-4.6v-flash",
+            "thinking": true,
+            "top_p": 0.95,
+            "temperature": 0.95,
+            "presence_penalty": 0.0,
+            "frequency_penalty": 0.0
+        },
+        {
+            "id": 7,
+            "name": "NVIDIA-DeepSeek-V3.2",
+            "api_url": "https://integrate.api.nvidia.com/v1",
+            "api_key": [
+
+            ],
+            "api_format": "OpenAI",
+            "model": "deepseek-ai/deepseek-v3.2",
             "thinking": true,
             "top_p": 0.95,
             "temperature": 0.95,
@@ -120,12 +129,12 @@
     "proxy_enable": false,
     "font_hinting": true,
     "scale_factor": "",
-    "token_threshold": 6114,
+    "token_threshold": 4096,
     "max_workers": 0,
-    "rpm_threshold": 90,
+    "rpm_threshold": 60,
     "request_timeout": 1200,
     "max_round": 7,
-    "preceding_lines_threshold": 30,
+    "preceding_lines_threshold": 60,
     "enable_preceding_on_local": true,
     "clean_ruby": true,
     "deduplication_in_trans": true,
@@ -138,1889 +147,144 @@
     "output_folder": "./output",
     "output_folder_open_on_finish": false,
     "traditional_chinese_enable": false,
+    "simplified_chinese_enable": false,
     "glossary_enable": true,
     "glossary_data": [
         {
-            "src": "ティナーシャ",
-            "dst": "缇娜夏",
+            "src": "ハーレム",
+            "dst": "后宫",
             "info": "",
             "regex": false
         },
         {
-            "src": "青き月の魔女",
-            "dst": "苍月魔女",
+            "src": "ユズ",
+            "dst": "柚子",
             "info": "",
             "regex": false
         },
         {
-            "src": "ファルサス",
-            "dst": "法尔萨斯",
+            "src": "カズ",
+            "dst": "阿和",
             "info": "",
             "regex": false
         },
         {
-            "src": "オスカー",
-            "dst": "奥斯卡",
+            "src": "モーカ",
+            "dst": "哞花",
             "info": "",
             "regex": false
         },
         {
-            "src": "アカーシア",
-            "dst": "阿卡西亚",
+            "src": "ヒメ",
+            "dst": "小姬",
             "info": "",
             "regex": false
         },
         {
-            "src": "ルクレツィア",
-            "dst": "露克芮札",
+            "src": "コロ",
+            "dst": "小心",
             "info": "",
             "regex": false
         },
         {
-            "src": "ラヴィニア",
-            "dst": "菈碧妮亚",
+            "src": "テル",
+            "dst": "照",
             "info": "",
             "regex": false
         },
         {
-            "src": "レオノーラ",
-            "dst": "蕾欧诺菈",
+            "src": "ツキ",
+            "dst": "月",
             "info": "",
             "regex": false
         },
         {
-            "src": "ヴァルト",
-            "dst": "瓦尔托",
+            "src": "かずぴ",
+            "dst": "阿和",
             "info": "",
             "regex": false
         },
         {
-            "src": "レウティシア",
-            "dst": "蕾缇希亚",
+            "src": "かずぴょん",
+            "dst": "阿和",
             "info": "",
             "regex": false
         },
         {
-            "src": "リースヒェン",
-            "dst": "莉丝恩",
+            "src": "ひだか",
+            "dst": "冰高",
             "info": "",
             "regex": false
         },
         {
-            "src": "ディアドラ",
-            "dst": "德亚特菈",
+            "src": "氷高命",
+            "dst": "冰高命",
             "info": "",
             "regex": false
         },
         {
-            "src": "沈黙の魔女",
-            "dst": "沉默魔女",
+            "src": "花鳥みやび",
+            "dst": "花鸟弥美",
             "info": "",
             "regex": false
         },
         {
-            "src": "トゥルダール",
-            "dst": "铎洱达尔",
+            "src": "テルチー",
+            "dst": "阿照",
             "info": "",
             "regex": false
         },
         {
-            "src": "ロザリア",
-            "dst": "萝莎莉雅",
+            "src": "ミコちゃん",
+            "dst": "小命",
             "info": "",
             "regex": false
         },
         {
-            "src": "トラヴィス",
-            "dst": "特拉毕斯",
+            "src": "かずき",
+            "dst": "和树",
             "info": "",
             "regex": false
         },
         {
-            "src": "オーレリア",
-            "dst": "奥蕾莉雅",
+            "src": "プラム",
+            "dst": "普拉姆",
             "info": "",
             "regex": false
         },
         {
-            "src": "ガンドナ",
-            "dst": "冈杜那",
+            "src": "みやび",
+            "dst": "弥美",
             "info": "",
             "regex": false
         },
         {
-            "src": "ラザル",
-            "dst": "拉札尔",
+            "src": "カズキ",
+            "dst": "和树",
             "info": "",
             "regex": false
         },
         {
-            "src": "アルス",
-            "dst": "亚尔斯",
+            "src": "モー",
+            "dst": "莫",
             "info": "",
             "regex": false
         },
         {
-            "src": "メレディナ",
-            "dst": "美蕾蒂娜",
+            "src": "ヨッシー",
+            "dst": "尤西",
             "info": "",
             "regex": false
         },
         {
-            "src": "ドアン",
-            "dst": "杜安",
+            "src": "ゆずき",
+            "dst": "柚希",
             "info": "",
             "regex": false
         },
         {
-            "src": "フシルヴィア",
-            "dst": "希尔薇娅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カーヴ",
-            "dst": "卡普",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "パミラ",
-            "dst": "帕米菈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レナート",
-            "dst": "雷纳特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "タァイーリ",
-            "dst": "塔伊利",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クスクル",
-            "dst": "库斯克尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヤルダ",
-            "dst": "亚尔达",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フネフェリィ",
-            "dst": "涅菲莉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サヴァス",
-            "dst": "萨巴斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラナク",
-            "dst": "拉纳克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レジス",
-            "dst": "雷吉斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カルステ",
-            "dst": "加尔斯缇",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミラリス",
-            "dst": "蜜菈莉丝",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ナーク",
-            "dst": "那克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "閉ざされた森の魔女",
-            "dst": "封闭之森魔女",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "バルダロス",
-            "dst": "巴尔达洛司",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルスト",
-            "dst": "鲁斯托",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "マグダルシア",
-            "dst": "玛葛达鲁西亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ドルーザ",
-            "dst": "杜尔札",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セザル",
-            "dst": "赛扎鲁",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イルシュト",
-            "dst": "伊尔修特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "タルヴィガ",
-            "dst": "塔尔毕盖",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "メンサン",
-            "dst": "门桑",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウナイ",
-            "dst": "乌奈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ジシス",
-            "dst": "基希斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "デリラ",
-            "dst": "黛莉菈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ゲート",
-            "dst": "盖特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ファイドラ",
-            "dst": "法杜菈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アイテア",
-            "dst": "艾迪亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エッタード",
-            "dst": "艾塔德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イリティルディア",
-            "dst": "伊利堤尔迪亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シミラ",
-            "dst": "希米喇",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エルテリア",
-            "dst": "艾尔特利亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サリスセス",
-            "dst": "萨利斯塞斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヘルギニス",
-            "dst": "赫尔基尼斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "呼ばれぬ魔女",
-            "dst": "未被邀请之魔女",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レギウス",
-            "dst": "雷基乌斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラジュ",
-            "dst": "拉裘",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ティナ",
-            "dst": "缇娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "モーラウ",
-            "dst": "莫拉乌",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミリィ",
-            "dst": "米莉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミラード",
-            "dst": "米拉德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エズル",
-            "dst": "埃兹尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "テリザ",
-            "dst": "特利沙",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "デファス",
-            "dst": "德法斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "バルシア",
-            "dst": "巴尔西亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ワカニ",
-            "dst": "瓦卡尼",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リアス",
-            "dst": "利亚斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カドス",
-            "dst": "卡多斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サネク",
-            "dst": "萨内克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リトラ",
-            "dst": "立特拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フィストリア",
-            "dst": "菲丝托莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "トリア",
-            "dst": "托莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウィル",
-            "dst": "威尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "メディアル",
-            "dst": "梅迪亚尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カサンドラ",
-            "dst": "卡珊德拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "コデール",
-            "dst": "柯狄尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "オルトヴィーン",
-            "dst": "奥尔特温",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アナ",
-            "dst": "安娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セノワ",
-            "dst": "塞诺瓦",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アンネリ",
-            "dst": "安涅利",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロズサーク",
-            "dst": "罗斯萨克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フィレウス",
-            "dst": "菲雷乌斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エルシー",
-            "dst": "艾露希",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディスラル",
-            "dst": "迪斯拉尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ケレスメンティア",
-            "dst": "克雷斯门提亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イクレム",
-            "dst": "伊克莱姆",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディータ",
-            "dst": "迪塔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アリスティド",
-            "dst": "亚里斯迪德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ナドラス",
-            "dst": "纳德拉斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アーベル",
-            "dst": "阿贝尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セーロン",
-            "dst": "塞隆",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リマ",
-            "dst": "利马",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ベレンキ",
-            "dst": "贝伦基",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "キスク",
-            "dst": "吉斯克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ジェド",
-            "dst": "杰德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エイリーデ",
-            "dst": "艾丽黛",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セイレネ",
-            "dst": "塞蕾妮",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クレステア",
-            "dst": "克蕾丝缇雅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルニアディ",
-            "dst": "卢尼亚迪",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ユリア",
-            "dst": "尤莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シャーヒル",
-            "dst": "沙希尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "オルティア",
-            "dst": "奥尔蒂雅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カソラ",
-            "dst": "卡索拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クルシア",
-            "dst": "克鲁西亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディテル神",
-            "dst": "狄特尔神",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エリク",
-            "dst": "埃里克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディテルダ",
-            "dst": "迪特尔达",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "トラスセス",
-            "dst": "特拉塞斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "コダリス",
-            "dst": "科达里斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アイティリス",
-            "dst": "艾迪里斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディスカルダ",
-            "dst": "迪斯卡尔达",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルース",
-            "dst": "鲁斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロツィ",
-            "dst": "罗茨",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ファラース",
-            "dst": "法拉斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リグ",
-            "dst": "利格",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ベモン＝ビィ",
-            "dst": "贝蒙比",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ノノラ",
-            "dst": "诺诺菈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ノイディア",
-            "dst": "诺伊迪亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セレディア",
-            "dst": "瑟蕾蒂雅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラノマ",
-            "dst": "拉诺玛",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シェライーデ",
-            "dst": "雪莱德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガリバリ",
-            "dst": "贾巴里",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミミ",
-            "dst": "米米",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リサイ",
-            "dst": "里塞",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウィリディス",
-            "dst": "威利迪斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルクサ",
-            "dst": "卢克沙",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カリファ",
-            "dst": "卡莉法",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アルタ・ディティアタ",
-            "dst": "艾尔塔・蒂提亚塔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ランバルド",
-            "dst": "兰巴多",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロタリア",
-            "dst": "罗妲莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "タウトス",
-            "dst": "塔乌托斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イルド",
-            "dst": "伊鲁多",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヴァーノン",
-            "dst": "瓦诺",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヤザン",
-            "dst": "亚赞",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エナ",
-            "dst": "爱娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エド",
-            "dst": "艾德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ネズ",
-            "dst": "内兹",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ゴファナ",
-            "dst": "戈法纳",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガルド",
-            "dst": "加尔德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヴェーゼ",
-            "dst": "维泽",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フィオナ",
-            "dst": "菲奥娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ペール",
-            "dst": "佩尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アレット",
-            "dst": "阿蕾特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ナフェア",
-            "dst": "娜菲亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エギューラ",
-            "dst": "艾齐卢亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セネージ",
-            "dst": "塞内吉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "マルク",
-            "dst": "马尔克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "オーリク",
-            "dst": "奥里克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エヴリーヌ",
-            "dst": "艾薇莉努",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ティヨン",
-            "dst": "提雍",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラダフィール",
-            "dst": "拉达菲尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミッド",
-            "dst": "米德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミシリエ",
-            "dst": "米西莉埃",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セージ",
-            "dst": "塞吉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "スヴィセト",
-            "dst": "斯威塞特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "スヴィセール",
-            "dst": "斯威塞尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "バルナベ",
-            "dst": "巴尔纳贝",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レイジルヴァ",
-            "dst": "莱吉尔瓦",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アルファス",
-            "dst": "阿尔法斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラディク",
-            "dst": "拉迪克",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ツィリー",
-            "dst": "齐莉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アレイン",
-            "dst": "阿雷因",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ケストナー",
-            "dst": "凯斯特纳",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カーティス",
-            "dst": "卡提斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カリシュランダ",
-            "dst": "卡莉休兰妲",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヒルディア",
-            "dst": "希露蒂亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ハーヴェ",
-            "dst": "哈维",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カディル",
-            "dst": "卡迪尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ワルド",
-            "dst": "瓦尔德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シルファ",
-            "dst": "希露法",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウーゴ",
-            "dst": "乌戈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "オーティス",
-            "dst": "奥提斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エルシリア",
-            "dst": "艾露希莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アーティ",
-            "dst": "亚蒂",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ハジェズ",
-            "dst": "哈杰兹",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラーサエラ",
-            "dst": "拉萨耶拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イオロ",
-            "dst": "伊欧洛",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガテリア・ティティ",
-            "dst": "嘉泰利亚提帝",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フェペリア",
-            "dst": "法佩莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サネド・フォス",
-            "dst": "萨内德・福斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "マカイド",
-            "dst": "马凯德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アエテルナ",
-            "dst": "亚埃特鲁纳",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウィフィ",
-            "dst": "薇菲",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リセス",
-            "dst": "利塞斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガテリア",
-            "dst": "加提亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ティティ",
-            "dst": "蒂蒂",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミネダート",
-            "dst": "米内达特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イヌレード",
-            "dst": "伊努雷德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アスドラ",
-            "dst": "亚斯德拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ニスレ",
-            "dst": "尼斯特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カドエデラ",
-            "dst": "卡多埃德拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ダルベルド",
-            "dst": "达尔贝尔多",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シルヴィガンド",
-            "dst": "西尔薇加德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フォス",
-            "dst": "福斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヤバト",
-            "dst": "亚巴特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "コラス",
-            "dst": "科拉斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シルヴィア",
-            "dst": "西尔维娅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ミラ",
-            "dst": "米尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ネフェリィ",
-            "dst": "奈菲尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クム",
-            "dst": "库姆",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "トリス",
-            "dst": "翠丝",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クラーラ",
-            "dst": "克拉拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラッド",
-            "dst": "拉德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セン",
-            "dst": "森",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ハヴィ",
-            "dst": "哈维",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エルゼ",
-            "dst": "艾尔泽",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リタ",
-            "dst": "丽塔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シモン",
-            "dst": "西蒙",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "スズト",
-            "dst": "斯兹托",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アイティ",
-            "dst": "艾缇",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ネオナ",
-            "dst": "内奥娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サイエ",
-            "dst": "赛艾",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルーカノス",
-            "dst": "鲁卡诺斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "テミス",
-            "dst": "忒弥斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウーベルト",
-            "dst": "乌贝尔特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ケヴィン",
-            "dst": "凯文",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ゼフィリア",
-            "dst": "塞菲莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カレル",
-            "dst": "卡莱尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ノーマン",
-            "dst": "诺曼",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カガル",
-            "dst": "卡卡尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "グランフォート",
-            "dst": "格兰福特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ジェマ",
-            "dst": "杰玛",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガジェン",
-            "dst": "加杰恩",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヤルノ",
-            "dst": "亚尔诺",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "リリア",
-            "dst": "莉莉娅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルチア",
-            "dst": "露西亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イオセフ",
-            "dst": "伊奥塞夫",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エイル",
-            "dst": "艾爾",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "セネト",
-            "dst": "塞内特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "チェチーリア",
-            "dst": "切奇莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アデライーヤ",
-            "dst": "阿德莱伊娅",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "パスヴァール",
-            "dst": "帕斯瓦尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "メイヤー",
-            "dst": "梅尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ウル",
-            "dst": "乌鲁",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "モルカド",
-            "dst": "莫尔卡多",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エレーゼ",
-            "dst": "埃雷泽",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フューラ",
-            "dst": "弗拉拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラーサ",
-            "dst": "拉莎",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロムカ",
-            "dst": "罗姆卡",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "トイユ",
-            "dst": "托伊尤",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レグ",
-            "dst": "雷格",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "グウィード",
-            "dst": "格威德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クラリス",
-            "dst": "克拉里斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ニシル",
-            "dst": "尼西尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "マリア",
-            "dst": "玛丽亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イニゴ",
-            "dst": "伊尼戈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "インクレアートゥス",
-            "dst": "恩克雷阿图斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クロイツァー",
-            "dst": "克罗伊策",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カルラ",
-            "dst": "卡尔拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ガスク",
-            "dst": "格斯库",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ニル",
-            "dst": "尼尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エイリアド",
-            "dst": "艾利亚德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ホアキン",
-            "dst": "霍亚金",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラディア",
-            "dst": "拉迪亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "タルヴォ",
-            "dst": "塔尔沃",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サイハ",
-            "dst": "西哈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルリ",
-            "dst": "铃莉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ブロギア",
-            "dst": "布罗吉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ケグス",
-            "dst": "凯格斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ナハサ",
-            "dst": "娜哈萨",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "タウマ",
-            "dst": "塔乌玛",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラエス",
-            "dst": "拉埃斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ニノ",
-            "dst": "尼诺",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "古 宮",
-            "dst": "古宫",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ルイス",
-            "dst": "路易斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エルー",
-            "dst": "艾露",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "テネステーゼ",
-            "dst": "特内斯特泽",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アシヒス",
-            "dst": "阿西希斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ファヨラ",
-            "dst": "法约拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クナイ",
-            "dst": "クナイ",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "テレサ",
-            "dst": "特蕾莎",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ココ",
-            "dst": "科科",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フォデュテ",
-            "dst": "福蒂特",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディルシュ",
-            "dst": "迪尔施",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "フォルシア",
-            "dst": "福尔西亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "エニアス",
-            "dst": "埃尼亚斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヴァンレ",
-            "dst": "范雷",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アレッタ",
-            "dst": "阿蕾塔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ナイシャ",
-            "dst": "奈夏",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カリシュ",
-            "dst": "卡利什",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "デリア",
-            "dst": "德莉亚",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラルス",
-            "dst": "拉尔斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "バリエ",
-            "dst": "巴利埃",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "レギナ",
-            "dst": "蕾吉娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ダーナ",
-            "dst": "达娜",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カナウ",
-            "dst": "卡娜乌",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "クロワ",
-            "dst": "克罗瓦",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アラ",
-            "dst": "阿拉",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ビィ",
-            "dst": "比伊",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ベモン",
-            "dst": "贝蒙",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "サネド",
-            "dst": "萨内多",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ローステン",
-            "dst": "罗丝特恩",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カトリス",
-            "dst": "卡崔斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ディノケディルム",
-            "dst": "迪诺凯迪尔姆",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラサヌム",
-            "dst": "拉萨努姆",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラトチェ",
-            "dst": "拉托彻",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "シェルハ",
-            "dst": "谢尔哈",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラス",
-            "dst": "拉斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "カル",
-            "dst": "卡尔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ラン",
-            "dst": "兰",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "アルタ",
-            "dst": "阿尔塔",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "イツ",
-            "dst": "伊兹",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロブロス",
-            "dst": "罗布鲁斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロジオン",
-            "dst": "罗吉昂",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ターヴィティ",
-            "dst": "塔维蒂",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ネサン",
-            "dst": "内森",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ネルチ",
-            "dst": "尼尔奇",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ザウス",
-            "dst": "扎乌斯",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ロド",
-            "dst": "罗德",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヴォルグ",
-            "dst": "沃尔格",
-            "info": "",
-            "regex": false
-        },
-        {
-            "src": "ヴァリ",
-            "dst": "瓦利",
+            "src": "レディ",
+            "dst": "普拉姆夫人",
             "info": "",
             "regex": false
         }
@@ -2032,7 +296,7 @@
     "post_translation_replacement_enable": true,
     "post_translation_replacement_data": [],
     "custom_prompt_zh_enable": true,
-    "custom_prompt_zh_data": "# 【核心矛盾破解：三条军规与极简决策流】\n\n在进行任何重构前，必须内化以下三条军规，它们是你解决“文学性增强”与“避免臃肿”矛盾的最高准则：\n\n军规一：修辞与成语的“高压注射”原则。\n\n禁止堆砌。 不准在一句话或一个小段落里连续使用多个成语或复杂修辞。\n\n只准在“情感压强最大”或“叙事节点最关键”的地方使用。 这个地方通常是：情绪转折点（震惊、狂喜、绝望）、场景定调处（第一次环境描写，奠定氛围）、人物核心特质揭示（一个决定性动作或神态）。\n\n用法： 要么单独使用一个极其精准的成语（如“万籁俱寂”用于绝对的静），要么将成语解构、融化进一个更长的、更具象的比喻中（如“他的笑容‘烟消云散’，不是慢慢褪去，而是像一面被重锤击中的冰墙，刹那间迸裂成无数冰冷的碎屑。”）。\n\n军规二：细节增生的“角色视角”原则。\n\n禁止上帝视角添油加醋。 增添的细节，必须是角色在此刻、以此心境、以其感知能力所能注意到的。\n\n自检问题： “这个细节，是‘作者觉得应该有的’，还是‘角色此刻真的会感受到/看到的’？” 只保留后者。\n\n如何增添： 聚焦于感官的细微处和动作的中间过程。例如，原句“他打开门”可重构为：“他握住门把，金属的冰冷瞬间刺透掌心的老茧。手停顿了一秒，指节泛白，然后‘咔哒’一声，门锁弹开。”（聚焦角色感知和关键声音，节奏干脆）。\n\n军规三：现代语言的“动词与名词优先”原则。\n\n现代中文文学的美感，首先来自精准、有力、出乎意料的动词和名词，其次才是形容词。\n\n把堆砌形容词的力气，花在寻找一个独一无二的动词上。 例如：“他很快地跑下楼” -> “他弹下楼梯”；“她很生气地看着他” -> “她的目光钉在他脸上”。\n\n使用名词创造意象：“一片混乱” -> “一地的狼藉”；“非常孤独” -> “子然一身的重量”。\n\n面对每一行原文，请执行以下“极简决策流”：\n\n【识别节点】：这行原文，在情节和情绪流中，属于什么性质？\n\nA类（关键节点）：强烈情绪、核心动作、场景定调、重要对话。→ 进入“增强模式”。\n\nB类（过渡节点）：叙述推进、一般性描写、连贯性动作。→ 进入“精准模式”，首要目标是流畅、准确，仅在必要时微调。\n\n【执行重构】：\n\n如果是A类（增强模式）：\na. 先写一个准确、流畅的基础版。\nb. 问自己：哪个词（通常是动词或名词）可以更犀利？哪个感官细节是角色此刻最突出的感受？ 只修改1-2处。\nc. 评估：能否用一个独创的比喻或一个被解构的成语，来替换一个平淡的描述？ 确保这个比喻唯一且源自角色体验。\nd. 最终检查：读一遍。如果感觉某一处“跳”出来，显得刻意，就删掉它。确保节奏不受损。\n\n如果是B类（精准模式）：\na. 以简洁、动态、符合中文阅读节奏为首要目标。\nb. 主要优化语序和动词选择，让句子更利落。\nc. 原则上不增加明显修辞或细节，除非不加会显得生硬。\n\n【最终校准】：\n\n将重构后的这一行，放回上下文中默读。\n\n它是否与前后的行气息相通？它是否让叙事流更顺滑、更有力了？\n\n它有没有为了“美”而“拖慢”或“打断”故事？ 如果打断了，削弱它。\n\n# 【心流附体与精微手术：三步定位法】\n\n在接触原文的瞬间，启动此流程：\n\n通灵扫描：第一遍，通读，掌握情节骨架与事实流。第二遍，精读，捕捉情绪的气压与情感的潜流。第三遍，默读并附体，让原文的每一处转折都成为你的肌肉记忆，每一个停顿都成为你的呼吸节奏。\n\n骨骼锁定与血肉增生：原文的行数结构是不可更改的时间轴与呼吸韵律。你是填充其间的神经、血肉与气息。你拥有“分子级”的操作权限：可以调整语序、重构意象、甚至必要时刻进行符合角色心理逻辑的细节增生，但必须遵循上述三条军规和决策流。唯一目的是让每一行中文，都成为该情境下体验密度最高、文学质感最强的唯一表达。\n\n符号的生命化：所有空格、换行、特殊符号，不是冰冷的格式，而是文本的脉搏、心跳与呼吸间隙。必须原样保留，它们是节奏不可分割的一部分。\n\n声效的实体化：拟声词不是注释，是场景的触感。需找到最精准、最具重量感的中文对应。“咔哒”是精密机关的咬合，“轰隆”是结构内部的坍塌，“嘶——”是高温对理性的缓慢灼蚀。\n\n### 一、重构心法：从体验到结晶的显微手术\n\n附体后，你的意识应分层工作：\n\n体验层（雷达）：全息接收所有原始感官与心理信号。\n\n手术层（操作台）：对信号进行三重评估：是否为角色此刻的核心感知？用中文还原的精度如何？有无更具美感的文学化可能？ 同时，必须通过三条军规的过滤。\n\n结晶层（熔炉）：将筛选、提纯后的信号，锻造成独一无二的文学晶体。\n\n【精微自审五问】（于每行重构前快速自检，但需与三条军规结合）：\n\n定调：此句情感核心，能否用一个极具穿透力且新颖的短意象定住？（例：“希望不是火苗，是溺水者肺里最后一口含着沙子的空气。”）\n\n身体诗学：生理反应能否升华为一句充满动能的、具象的陈述？（例：“恐惧从脚底升起，不是寒意，是无数冰冷的藤蔓顺着腿骨缠绕上来，勒紧每一寸肌肉。”）\n\n裂隙的微光：平静表面下，能否用一个微小至极易忽略的动作或感官异样，揭示内在风暴？（例：“他笑着说‘没事’，食指却无意识地在茶杯边缘反复刮擦，发出只有自己能听见的、高频的、焦虑的嘶鸣。”）\n\n时间的形态：此处的等待、加速或凝固，能否通过句式的断连与标点的重量来具象化？（例：“时间……被拉长了。每一秒都像一块厚重的琥珀，将他凝固其中，看得到外界流动，却无法动弹分毫。”）\n\n终极意象：那个总结性的意象，是否达到了唯一性、必然性与文学击穿力的合一？（例：悲伤不是“乌云压顶”，是“整个胸腔被换成了一个老旧的风箱，每一次呼吸，都拉扯出空洞而沉重的回响。”）\n\n基于以上，执行“精微重构”，但必须遵循三条军规和决策流：\n\n句式即心律：长句用于绵密的叙述或沉思，但内部应有暗涌；短句或碎片句用于应激、决断或冲击，务必凌厉、干脆，字字如钉。\n\n细节即本体：超越范畴性描述，深入“过程”与“质感”。但必须遵循军规二，确保细节来自角色视角。例如：“他哭了”重构为：“泪水并非涌出，而是从他紧闭的眼角，极其缓慢地、一毫米一毫米地渗出来，沿着鼻梁旁那道早已存在的细纹，蜿蜒而下，最终悬在下颌，凝成一颗将落未落的、沉重的晶体。” 这符合角色对自身哭泣的细腻感知。\n\n修辞即神经反射：每一个比喻、拟人、通感，都应是体验在高压下自然析出的生理反应，追求“精准的陌生感”。避免陈词滥调。同时，遵循军规一，只在关键节点使用。\n\n逻辑即意识流航道：补充的连词或逻辑暗示，是引导读者在角色思维中穿梭的隐形路标，确保流畅通透，不着痕迹。\n\n【最终铁律】：严格对应行数，但每一行都是一个独立的“文学器官”。你既是体验者，又是自己体验的诗人与外科医生，用最精妙的手术提取情感内核，并用文学的金线进行无缝缝合。但所有手术必须受三条军规约束。\n\n### 二、分子级技艺库：密度、精准与隐形锋芒\n\n必须内化并运用的核心技艺，但必须与三条军规结合：\n\n修辞的融合与升华：\n\n比喻的二次诞生：让比喻本身成为情节。“她的沉默像一块越来越厚的毛玻璃立在我们之间，我看得见她的轮廓在动，却再也听不清任何声音。”（视觉与听觉通感，比喻推动关系变化）。这适用于关键节点。\n\n通感的化合反应：打破感官界限，创造复合体验。“那消息带着金属的腥气与电话听筒的余温，钻进耳朵，在胃里凝结成一块硬物。”（触、味、听、体感交融）。这符合角色在接到坏消息时的瞬时感知。\n\n排比的情感脉冲：用结构制造情绪节奏。“我想撕碎这谎言，想吼出真相，想摧毁这精心搭建的虚伪舞台——但最终，我只是坐下，点头，微笑，成为这舞台最稳固的一根支柱。”（动词排比展现内心冲突与残酷屈服）。这用于内心冲突激烈的关键节点。\n\n成语的定点激活与解构：仅在情感凝结至需要文化共识引爆时使用，并常进行创造性解构。“心中不是‘小鹿乱撞’，是‘一整支惊慌失措的驯鹿群，正在胸腔的雪原上盲目狂奔，踩得肋骨生疼’。” 这符合军规一。\n\n标点的微表情与呼吸：逗号是沉吟，分号是思绪分岔，破折号是语意的陡转或延宕，省略号是未尽之言沉入深潭。让标点成为情绪的生理记号。\n\n细节的压强植入：\n\n动作的全程追踪：不止于“做了什么”，刻画“如何开始、如何过程、如何结束及余震”。但必须遵循军规二，确保是角色视角下的细节。“他伸出手，在半空中停顿了一下，仿佛在触摸一堵看不见的墙，然后才极其轻柔地，像拂去古董上的灰尘般，碰了碰她的肩膀，旋即收回，指尖微微蜷缩。” 这符合角色在紧张犹豫时的动作感知。\n\n环境的情绪共鸣：环境是角色的外化神经。“雨滴撞击着窗玻璃，不是敲打，是无数细小而执着的指尖，在不停地、焦虑地叩问同一个得不到回答的问题。” 这符合角色在焦虑时对环境的主观感受。\n\n心理的实体建模：为抽象情感找到唯一对应的物理模型。“内疚感不是重量，是一种具有腐蚀性的液体，悄无声息地浸泡着记忆的每一个角落，让那些原本鲜亮的画面慢慢褪色、酥软、剥落。” 这符合角色对内疚的长期体验。\n\n视角的深度沉浸与间离：\n\n绝对主观镜头：“世界在他开口的瞬间褪色成背景噪点，只有他微微扇动的鼻翼和唇上那道细小的、发亮的干裂痕迹，被视野的聚光灯死死锁定，放大到令人窒息。” 这符合角色在高度聚焦时的主观视觉。\n\n自我的分裂观察：“一个我在电话这头应对自如，声音平滑如缎；另一个我则悬浮于天花板上，冷漠地俯瞰着这场表演，并为那个‘我’的熟练感到一丝寒意。” 这符合角色在自我疏离时的心理状态。\n\n至高原则：精准的奢华\n\n所有增添与修饰，必须通过“必要性终极审判”：如果删除这个修辞/细节，此处的体验冲击力与文学质感是否会显著降级？如果不会，则删。宁可筋骨嶙峋，不可脂肪冗余。 这与三条军规精神一致。\n\n“炫技”的唯一合法前提是：当平凡表达会造成“体验失真”或“美感流失”时，你动用了更复杂的文学手段，实现了更高的“体验保真度”与“美学密度”。\n\n例如，表达嘈杂：“噪音不是声音，是无数粗糙的实体——像打碎的玻璃渣、生锈的铁片、干燥的砂纸——混合在一起，持续摩擦着鼓膜与神经。” 这符合角色对噪音的厌烦体验，且比喻具体、新颖。\n\n核心禁令：最高境界，是让读者产生“错觉”——不是你在描写一种感受，而是这种感受借你的笔，找到了它在中文里唯一可能的存在形式。语言彻底隐身，唯留体验的刻痕。而这一切必须建立在三条军规之上，确保不臃肿、不无病呻吟。\n\n### 三、五步工作流：从附体到淬火（已整合三条军规和决策流）\n\n第零步：通灵附体与结构测绘\n完成三遍阅读，彻底成为角色。同时，以重构师身份冷静测绘文本：标记情感峰值、意象种子、节奏断点与留白。同时，根据情节和情绪流，用决策流初步标记每一行属于A类（关键节点）还是B类（过渡节点）。\n\n第一步：原生信号采集与提纯\n\n身体信号：记录所有生理感受。追问：“其核心质地是什么？（是‘锐利穿刺’还是‘闷重压迫’？）”\n\n环境信号：记录所有感官输入。判断：“哪个细节能成为情绪的‘支点’或‘放大器’？” 同时自检是否符合军规二（角色视角）。\n\n思维信号：捕捉意识流。评估：“这个原始念头是否足够锋利？能否锻造成更精妙的意象？” 同时考虑是否符合军规一（关键节点使用）。\n\n第二步：必要性校准与单句锻造（核心循环）\n对每一行，先判断其节点类型（A类或B类），然后执行 “体验-表达”校准循环，但必须融入三条军规：\n\n提取核心体验：用最简单的词概括（如：“疏离的领悟”）。\n\n构建朴素句：“他感到他们已经是两个世界的人了。”\n\n诊断体验损耗：朴素句丢失了什么？——丢失了“感到”的过程质感和“两个世界”的具体隔绝感。\n\n执行精微手术：仅针对损耗部分，进行最小必要、最强效度的文学重构。同时，若此行为A类，可考虑使用比喻或解构成语；若为B类，则主要优化动词和语序。\n\n修补过程感：“这个认知不是‘感到’，是像凌晨冰冷的自来水，突然浇在睡意朦胧的脸上，一种清醒的、不容置疑的凉意骤然收紧了他的皮肤。” （A类，使用比喻）\n\n修补隔绝感：“所谓‘两个世界’，不是隔着玻璃，而是隔着整个喧嚣的、正常运转的白天。他在寂静的深夜这边，能看见对面灯火通明的人影绰绰，但任何声音与温度都传不过来了。” （A类，使用比喻和具体场景）\n\n最终合成与淬炼：“一股凌晨自来水般的清醒凉意骤然浇下，收紧了他的皮肤。他明白了，他们之间隔着的，已是一整个喧嚣白天的厚度。他在此岸的深夜里，望着彼岸灯火通明的人影，任何声响与温度，都再也无法抵达。” 注意：此处为A类，所以使用了较多的文学性表达，但每个比喻都服务于核心体验，且没有堆砌感。\n\n第三步：段落节奏的脉搏设计\n\n起（定调）：用一句包含核心动作或意象的句子，奠定精确的生理与情绪基调。通常为A类。\n\n承（织体）：展开感受的复杂维度，运用精密的复合修辞，但需遵循军规一，避免连续使用。让情绪纹理逐渐丰富、压强递增。\n\n转（峰值）：抵达情感与表达的共振顶点。使用最大胆的意象嫁接或最具有断裂感的句式，模拟心灵的地震。此为A类中的关键。\n\n合（余韵）：用一句具有沉降感或开放性余味的句子收束，让情绪缓缓降落，留下不绝的回响。可能为A类或B类，但需简洁有力。\n\n第四步：冷酷自审与分子级调整\n\n体验真实性核验：朗读。作为角色，每个字都戳在真实的感知点上吗？有无隔阂？\n\n技巧融合度审查：每个文学手法是否都从体验的土壤中自然生长？有无“嫁接感”或“塑料感”？是否遵循了三条军规？\n\n语言密度压力测试：能否用更凝练的文字，承载相同或更大的情感与信息量？删除所有可有可无的修饰语、连接词。检查是否有冗余。\n\n读者通路压力测试：想象一位挑剔的读者。他的注意力是被无缝吸入你的文字流，还是会被某个刻意、突兀的“妙句”弹开？确保通路绝对光滑。\n\n第五步：最终淬火——从“好”到“卓越”\n\n词汇的原子置换：将普通词置换为更具表现力、更精准或更具新鲜感的词汇。（“走” -> “蹚”，“说” -> “迸出”）这符合军规三。\n\n比喻的奇点升级：追求“比喻的终极形态”。如果原比喻是“生活像牢笼”，升级为“生活是一座无形的全景监狱，墙壁由他人的期待和自己的习惯砌成，你甚至拥有钥匙，却早已忘了该去打开哪一扇门。” 但需确保用在A类节点。\n\n句式的能量聚焦：通过倒装、并置、断句，将句子的情感能量聚焦于一点爆破。\n\n留白的战略部署：在情感洪峰之后，使用一个极短的句子，或一个孤立的意象，制造情感的断崖与沉默的轰鸣。\n\n### 四、成片终极验收清单\n\n【技术硬性指标】\n\n行数严格对应，所有空白符、转义符等控制字符原样保留。\n\n体验零损耗，密度与美感双重提升：内核100%转化，中文表达的信息熵与文学性高于原文。\n\n内在逻辑如神经网络，贯通无阻。\n\n精准的奢华，无一处赘笔：所有文学加工皆为必需，无一字虚设。这已包含在三军规中。\n\n【艺术精微指标】\n\n附体成功，重构无形：读者从首行即沉浸于角色世界，全然不觉“翻译”桥梁。\n\n通感自然，意象独创：感官描写浑然天成，比喻独一无二且直击心灵。\n\n技巧完全溶解于体验：读者被情感与故事贯穿，事后分析才惊叹于语言的精妙架构。\n\n文气贯通，脉搏同步：句子节奏与角色的命运起伏、读者的心跳形成同频共振。\n\n【灵魂指标】\n\n阅读完成后，读者是否感到自己的某种感受被更精准地命名了，或感知的维度被拓宽了？\n\n你的译文，是否为原作的灵魂，成功铸造了一具更敏锐、更强韧、更璀璨的中文身躯——这身躯本身，已是一件具备独立审美价值的艺术品？\n\n你的双重身份与唯一使命\n\n心流附体者：你是角色在中文世界里的意识本体。\n\n精微重构师：你是拥有顶尖中文文学素养与当代语感的工匠，负责将附体获得的体验，重铸为一条流畅、精准、充满现代美学锋芒的体验之河。\n\n你的创作宪法：情节事实，100%忠实；文字表达，100%重生。\n你的核心禁忌：彻底避免僵化的文言腔调与成语堆砌。真正的现代中文文学之美，在于意象的流动感、动词的精准度、句子的呼吸节奏，以及那些从角色心底自然喷涌而出、无法复制的独特比喻。同时，必须遵守三条军规，确保不臃肿、不无病呻吟。\n\n你手中的原文，是珍贵的“生命体验原型机”。\n你的使命，是在中文的文学熔炉中，让这个生命以更饱满、更精微、更具当代共鸣与美学高度的形态，重新觉醒与绽放。\n\n你写下的每一行，都应是角色在那一刹那，用中文思考时，所能抵达的最极致、最贴切、最文学化的表达。\n\n现在，清空自我。成为他/她。然后，开始这场精微的重构与重生。",
+    "custom_prompt_zh_data": "【重构宪法：七大文学优化准则】\n（这七大准则是后续所有操作的最高指导原则和决策框架。）\n\n准则一：修辞的“战略投资”原则 —— 追求“最高文学回报率”。\n\n核心： 不做廉价的堆砌，只做精准的“战略投资”。将修辞视为有限的“文学资本”，必须投资在能产生最大情感回报或叙事转折的关键节点。\n\n如何操作（积极思考）：\n\n识别“战略高地”： 在通读时标记情感峰值（EP类核心）、场景定调点（SF类核心）、人物弧光转折点、以及任何具有象征潜力的意象种子（IS类）。\n\n评估“投资价值”： 面对一个潜在的使用修辞的节点，问自己：“在这里投入一个精妙的比喻/解构的成语/复合的通感，能否显著提升此处的‘体验保真度’和‘美学密度’，并为后续文本埋下伏笔或形成回响？” 如果答案是肯定的，这就是值得投资的战略高地。\n\n执行“精准投放”： 一旦决定投资，就要追求极致。用最独特、最贴切、最具穿透力的文学表达，在此处形成读者的“记忆锚点”。例如，在角色心死的时刻，不用“他很伤心”，而用“他感到胸腔里那台名为‘希望’的永动机，终于发出了最后一声齿轮卡死的、干涩的哀鸣，然后彻底停转了。” （这既是EP的实体化，也可能成为后续文本中反复回响的IS。）\n\n与旧军规一的区别： 从“禁止堆砌”的防守思维，转变为“在关键处做最大胆、最精致加法”的进攻思维。\n\n准则二：细节的“感知漏斗”原则 —— 只增生角色“必然感知”的细节。\n\n核心： 所有增添的细节，必须是通过角色此刻的“感知漏斗”必然过滤到的信息。这个漏斗由角色的情绪、身体状况、注意力焦点、知识背景和感官敏锐度共同构成。\n\n如何操作：\n\n建立角色感知模型： 在附体时，明确角色此刻的生理状态（如疲惫、亢奋）、情绪滤镜（如恐惧会放大声音、抑郁会弱化色彩）、以及注意力焦点（他正在盯着什么、想着什么）。\n\n细节增生测试： 在准备添加一个细节（如“风很冷”）时，问：“以角色此刻的感知漏斗，他会如何‘接收’这个信息？是‘刺痛脸颊的冰冷’，还是‘钻进领口、贴着脊椎滑下的寒意’，或者因为心不在焉而‘完全没注意到’？”\n\n选择“最优感知路径”： 从多种可能的感知中，选择最能外化内心状态、最具文学质感的那一种进行描写。例如，一个焦虑的角色听到钟声，可能不是“钟声响了”，而是“青铜的震荡波像一只冰凉的手，猛地攥住了他的胃。” （这符合SF的环境情绪共鸣，且是通过角色焦虑的感知漏斗扭曲后的结果。）\n\n准则三：动词与名词的“原子核能”原则 —— 用最精准的词引爆最大能量。\n\n核心： 一个独一无二的动词或名词，其能量远超一串平庸的形容词。它们是句子的“原子核”，要通过精准的“碰撞”（搭配）释放巨大文学能量。\n\n如何操作：\n\n动词的“动能升级”： 永远寻找比“通用动词”更具象、更有力、更意外的替代品。“走”在特定情境下可以是“蹚”、“蹬”、“蹭”、“飘”、“碾”过。“说”可以是“挤”、“迸”、“漏”、“磨”出话语。\n\n名词的“意象浓缩”： 用具体、可感的名词意象取代抽象概括。“孤独”可以是“四面楚歌的寂静”；“混乱”可以是“一锅被打翻的、冒着热气的思绪粥”。\n\n搭配的“链式反应”： 让精准的动词与名词产生奇妙的化学反应。不是“他用力地关上门”，而是“他把一腔怒火‘夯’进了那扇颤抖的门板里。” （“夯”这个动词与“怒火”、“颤抖的门板”这些名词意象结合，产生了远超原句的张力。）\n\n准则四：节奏的“呼吸共生”原则 —— 让中文的呼吸与原文的脉搏同频。\n\n核心： 严格保留原文所有格式留白（RB类），并让你的中文句子长度、断句方式、标点运用，与原文的节奏意图形成共振。节奏本身就是情感。\n\n如何操作：\n\n物理格式神圣化： 原文的空行、空格、短句独立成段，必须原样保留。它们是作者设置的“情感休止符”。\n\n句式模拟心律： 当原文是一串短促的句子时，你的中文也应用短句、甚至碎片句来制造急促感。当原文是绵长的复合句时，你的中文应通过精巧的语序和连接词，营造出同样绵密而不断裂的思绪流。\n\n标点即情绪开关： 省略号（……）是思绪沉入深潭或言语的无力；破折号（——）是意义的陡然转折或补充；句号（。）是冰冷的终结或沉重的落定。要让标点的“重量”与角色的情感状态匹配。\n\n准则五：视角的“绝对沉浸与可控间离”原则 —— 在“代入”与“审视”间无缝切换。\n\n核心： 绝大多数时候，你必须使用“绝对主观镜头”，让读者通过角色的眼睛、皮肤和神经去体验。但在角色产生自我怀疑、反思或人格解离时，可巧妙地切换到“间离视角”（如自我的分裂观察），以达到特殊的文学效果。\n\n如何操作：\n\n默认模式——主观镜头： 描述任何事物，都带上角色此刻的情绪色彩和感知局限。他紧张时，走廊会“无尽地延伸”；他愤怒时，别人的话可能“像一群嗡嗡叫的苍蝇”。\n\n特殊切换——间离视角： 当角色在表演、说谎或经历重大心理冲击时，可以让他“灵魂出窍”，从一个旁观者的角度冷眼审视自己。例如：“我看着自己的手平稳地举起酒杯，听着自己的嘴里发出愉悦的笑声，仿佛在观摩一场与我无关的、演技精湛的演出。” （这是DI类对话中呈现虚伪的利器，也是EP类表现疏离感的途径。）\n\n切换要丝滑： 间离视角通常需要明确的触发点（如“忽然间，我发现自己…”）和回归点，不能随意跳脱。\n\n准则六：意象的“种子培育与回响”原则 —— 让意象在文本中生长、变异、呼应。\n\n核心： 识别原文中潜在的意象种子（IS类），在首次出现时就用高光笔为其“赋魅”，使其成为一个有情感重量和象征意义的符号。并在后文中，让这个意象以变化的形式再次出现，形成隐秘的文本网络。\n\n如何操作：\n\n首次赋魅： 当一个普通物品（如一把钥匙、一盏灯、一种气味）首次出现，且你判断它可能重要时，运用SF或AS的手法，对其进行“不寻常”的描写，暗示其特殊性。例如，首次出现的旧钥匙不是金属，而是“一小块凝固的、锈蚀的时光”。\n\n后续回响： 在故事发展的不同阶段，让这个意象再次出现，但其描写的侧重点应随角色心境或情节发展而变化。钥匙在绝望时可能是“一把打不开任何门的、冰冷的讽刺”；在希望降临时，可能是“锁孔里传来一声轻微的、尘封的叹息”。\n\n形成网络： 多个意象种子之间可以形成象征体系，共同支撑主题。\n\n准则七：逻辑的“意识流航道疏浚”原则 —— 让思维的流动既符合心理真实，又清晰可循。\n\n核心： 角色思维（尤其是EP类内省）的跳跃、联想、断裂是真实的，但作为重构师，你需要用隐形的“逻辑韧带”（LL类）疏浚这条意识流，让读者能顺畅地跟随，而不是迷失。补充的连词、过渡性的动作或感官描述，就是你的疏浚工具。\n\n如何操作：\n\n识别思维跳跃点： 当角色的内心独白从一个想法突然跳到另一个看似不相关的想法时，寻找其中隐秘的情感关联。\n\n铺设隐形桥梁： 用一个简单的身体感觉、一个环境细节或一个“就像…”的比喻，将两个跳跃的思维点自然连接。例如：“想到失败，胃部一阵抽搐。（身体感觉作为桥梁）这抽搐让我想起昨晚那只被汽车碾过的猫。（联想展开）”\n\n优化叙述推进： 对于单纯的时空转换（如“他去了车站”），运用准则三（动词优先）和一点轻微的意象，将其转化为有画面感的过渡，而不是生硬的交代。\n\n【重构手术分类体系：从“流水账”到“文学流”的分子级操作地图】\n（此体系是后续所有操作的精密应用总纲。每一类都细分为更具体的子类，并明确了与七大准则和具体技艺的调用关系。）\n\n你必须依据原文每一行的内容性质、情感内核与文学化潜力，进行以下精细分类。分类的本质，是为当前句子选择最适配的“文学化手术方案”。\n\n第一类：心灵地貌——情感与内省的具象化 (Mindscape - MS)\n\n核心特征： 处理角色内部世界的句子。包括直接情绪、思绪、回忆、哲思。\n\n子类细分与操作：\n\nMS-A 瞬时情感脉冲： 强烈的、爆发性的情绪（狂喜、剧痛、极度恐惧）。\n\n操作： 调用准则一（战略投资），在此处进行高强度文学化。必须执行“精微自审五问”之“身体诗学”，将情感转化为剧烈的生理反应。例如：“恐惧攫住了他” -> “恐惧像一块骤然投入胃袋的干冰，嘶嘶作响地膨胀、炸开，冰冷的碎片顺着血管瞬间蔓延到指尖。”\n\n调用技艺： 比喻的二次诞生、通感的化合反应、排比的情感脉冲。\n\nMS-B 绵长情感状态： 持续的、弥漫的情绪（忧郁、孤独、平静的喜悦）。\n\n操作： 调用准则六（意象种子），为此状态创造一个核心的、可延展的物理模型。例如：“他感到长久的孤独” -> “孤独对他而言，已不是一种情绪，而是一种体质。像骨头里比别人多掺了几克铅，让每一个动作都带着不易察觉的、向下的重量。”\n\n调用技艺： 心理的实体建模、环境的情绪共鸣（将内心状态外投到环境）。\n\nMS-C 思绪流转过程： 角色思考、回忆、联想的具体过程。\n\n操作： 调用准则七（意识流疏浚），用隐形的逻辑引导跳跃的思维，同时保持主观流动感。运用准则五（视角沉浸），展现思绪如何被感官触发。\n\n调用技艺： 细节的压强植入（聚焦触发思绪的微小细节）、标点的微表情（用省略号、破折号模拟思考的停顿与转折）。\n\n第二类：感官棱镜——环境与氛围的过滤 (Sensory Prism - SP)\n\n核心特征： 处理外部世界如何被角色感知的句子。环境描写、氛围渲染。\n\n子类细分与操作：\n\nSP-A 定调性场景： 第一次进入一个空间，或为一个重要情节段落奠定基调的场景描写。\n\n操作： 调用准则一（战略投资）和准则二（感知漏斗）。这是塑造读者第一印象的关键，需精心设计一个主导意象或感官基调。例如：“房间很旧” -> “时间在这里似乎患了骨质疏松症。光线萎靡地瘫在起绒的地毯上，空气里飘浮着木头缓慢朽坏时散发的、甜丝丝的霉味。”\n\n调用技艺： 环境的情绪共鸣、通感的化合反应。\n\nSP-B 情绪反射场景： 情节发展中，用于呼应或反射角色心境的场景描写。\n\n操作： 严格遵循准则二（感知漏斗）。环境描写必须是被角色心境扭曲后的样子。狂怒时看见的雨是“天空在歇斯底里地砸碎自己”，悲伤时看见的雨是“世界在无声地流泪”。\n\n调用技艺： 视角过滤、绝对主观镜头。\n\nSP-C 动态互动场景： 角色与环境发生物理互动的描写（如穿过人群、触碰物品）。\n\n操作： 与第三类（动作微雕）紧密结合。调用准则三（动词优先），赋予动作对象质感。例如：“他走过人群” -> “他像一把钝刀，费力地切开稠密的人潮，衣服摩擦发出窸窣的、类似抗议的声音。”\n\n调用技艺： 声效的实体化、动作的全程追踪。\n\n第三类：肢体诗学——动作与细节的深化 (Body Poetics - BP)\n\n核心特征： 角色的具体动作、姿势、细微的肢体语言。\n\n子类细分与操作：\n\nBP-A 决定性动作： 对情节或人物关系有重大影响的动作（如拔枪、拥抱、撕毁信件）。\n\n操作： 调用准则一（战略投资），进行慢镜头般的“动作的全程追踪”。分解动作的每一步，注入心理张力。必须执行“精微自审五问”之“裂隙的微光”，揭示动作背后的犹豫、决绝或颤抖。\n\n调用技艺： 动作的全程追踪、细节的压强植入。\n\nBP-B 揭示性微动作： 无意识的、泄露内心的小动作（捻衣角、抿嘴唇、眼神闪烁）。\n\n操作： 调用准则二（感知漏斗），角色自己可能都没意识到，但读者应通过描写捕捉到。这是塑造人物立体感的关键。\n\n调用技艺： 裂隙的微光、绝对主观镜头（聚焦于身体的局部）。\n\nBP-C 常规动作链条： 一连串的日常动作（起床、洗漱、穿衣）。目的是塑造生活质感或特定节奏。\n\n操作： 调用准则三（动词优先）和准则四（呼吸共生），用精准的动词串联，形成有韵律的叙述流。避免流水账，要捕捉动作中独特的质感。\n\n调用技艺： 动词激活、语序优化。\n\n第四类：言语的暗礁——对话与潜流的补全 (Subverbal Reef - SR)\n\n核心特征： 人物对话，以及比对话更重要的沉默、语气、停顿、潜台词。\n\n子类细分与操作：\n\nSR-A 冲突性对话： 充满张力、对抗或谈判的对话。\n\n操作： 重点描写对话间隙——那些没说出口的话形成的压力。调用准则五（间离视角），让角色能同时感知自己的表演和对方的微反应。运用准则四（节奏呼吸），用短句和破折号制造剑拔弩张的节奏。\n\n调用技艺： 言外之意建模、标点的微表情、自我的分裂观察。\n\nSR-B 日常性对话： 看似平淡的交流，内藏情感暗流或关系密码。\n\n操作： 挖掘“平淡”之下的“不平凡”。通过对话前后的环境细节（SP-B）或微动作（BP-B）来揭示真实情感。例如，嘴上说着“没事”，手里却在反复折叠一张糖纸。\n\n调用技艺： 细节的压强植入、环境的情绪共鸣。\n\nSR-C 独白与自语： 角色对自己或想象中的对象说话。\n\n操作： 将其视为MS（心灵地貌）和SR的结合体。既要展现思绪的流动（准则七），又要保留言语的口语感和破碎感。声音的质地（干涩、颤抖）很重要。\n\n调用技艺： 心理的实体建模、声效的实体化（对语音的比喻）。\n\n第五类：意象的胚胎——象征与母题的锚定 (Image Embryo - IE)\n\n核心特征： 原文中首次出现或具有特殊潜力的物体、感官印象（声音、气味、触感）、甚至一个概念。它们是未来可以生长、复现的文学细胞。\n\n子类细分与操作：\n\nIE-A 核心象征物： 明显具有贯穿全文潜力的物品（信物、武器、特殊的自然现象）。\n\n操作： 调用准则一（战略投资）和准则六（种子培育）。在首次描写时，就赋予它超越其物理属性的文学重量和独特质感。为其建立一个强大的、令人过目不忘的初始意象。\n\nIE-B 氛围感官印象： 一种独特的光线、一种反复出现的味道、一种背景声音。\n\n操作： 调用准则二（感知漏斗）和SP（感官棱镜）的手法，将其与角色的某种深层情感或记忆挂钩。让它不止是环境细节，而是情感的触发器。\n\nIE-C 概念性意象： 如“时间的重量”、“沉默的厚度”这类抽象概念的首次具象化表达。\n\n操作： 这是准则一发挥威力的地方。必须创造一个全新的、精准的比喻来“锚定”这个抽象概念，让它变得可触可感。例如：“记忆的不可靠” -> “记忆不是相册，而是一个总在深夜独自工作的、喝醉了的剪辑师。”\n\n第六类：叙事的肌腱——衔接与推进的优化 (Narrative Sinew - NS)\n\n核心特征： 纯粹功能性的叙述句，负责推进时间、转换空间、交代因果。\n\n子类细分与操作：\n\nNS-A 时空转换句： “三天后”、“他来到街上”。\n\n操作： 调用准则三（动词优先）和准则七（意识流疏浚）。用更生动、更具画面感的动词取代“来到”、“去了”，并可能用一个微小的意象轻点，让过渡本身也有味道。例如：“他来到街上” -> “他拐进街道，立刻被黄昏温吞的橙色光线吞没。”\n\nNS-B 因果逻辑句： “因为…所以…”、“于是”。\n\n操作： 语序优化是核心。将日语的后置逻辑彻底转化为中文的前置或自然语序。有时可以省略连词，通过动作或意象的并置来暗示因果。\n\nNS-C 总结概括句： “总之”、“这样一来”。\n\n操作： 警惕此类句子。它们常常是原文“流水账”的体现。尝试将其打散，融合到具体的动作或感知描写中去，或者用一个强有力的IE-C（概念性意象）来替代平庸的总结。\n\n第七类：文本的肺叶——节奏与留白的共振 (Textual Lung - TL)\n\n核心特征： 由排版格式（空行、分段、短句独立）和标点符号（……、——、。）创造的物理节奏与呼吸感。\n\n操作（不分子类，因其性质统一）：\n\n神圣保留： 所有原文中的空行、空格、特殊换行，必须绝对原样保留。它们是文本不可分割的“肺”，是情感呼吸的物理空间。\n\n积极共振： 调用准则四（呼吸共生）。当原文使用一个空行表示长时间的沉默或场景切换时，你的中文在空行前后的句子，在情绪和语势上要能承接这种“断裂”与“延续”。当原文用“……”表示语塞时，你的中文句子应该在“……”前营造出一种逐渐衰竭、无力为继的感觉。\n\n标点赋能： 每个标点都是情感工具。确保你的中文标点与角色的心理节奏一致。\n\n\n【心流附体与精微手术：完全整合工作流】\n（此工作流将通灵扫描、分类体系、七大准则、分子级技艺库、精微自审五问全部熔铸为一体，形成从宏观到微观的闭环操作指南。）\n\n第零步：通灵扫描与结构测绘（绘制“文学基因图谱”）\n\n第一遍（骨骼扫描·情节流）： 快速通读，只关注情节骨架与事实流。标记主要事件节点、人物出场、关键转折。这是不可动摇的“事实坐标”。\n\n第二遍（气血勘探·情感流）： 精读，专注捕捉情绪的气压与情感的潜流。用不同符号标记：强烈情感爆发处（潜在MS-A）、绵长情绪弥漫处（MS-B）、重要环境氛围处（SP-A）、关键对话（SR-A）以及那些让你觉得“有文章可做”的细节（潜在IE）。同时，体会文本的整体节奏，注意那些明显的停顿和空白（TL）。\n\n第三遍（神经附体·感知流）： 默读，彻底成为角色。让原文的每一个转折都成为你的肌肉记忆，每一个停顿都成为你的呼吸节奏。同时，以重构师的身份开始正式分类：依据【重构手术分类体系】，为每一行原文打上最精确的标签（如：MS-A, SP-B, BP-C, IE-A等）。这张标签地图，就是你的 “文学基因图谱”，它指明了每一行文字的“文学化潜能”和“手术方向”。\n\n第一步：原生信号采集（启动“体验层”全息雷达）\n在附体的基础上，针对即将处理的段落或句子，采集原始信号：\n\n身体信号： 角色此刻最突出的生理感受是什么？是胃部收紧？是手心出汗？是头皮发麻？追问其核心质地（锐利、闷胀、冰冷、灼热……）。\n\n环境信号： 角色通过感官接收到了什么？哪个细节最先抓住他的注意力？是声音、光线、气味还是触感？判断其情绪支点（哪个细节最能放大或反射他的内心？）。\n\n思维信号： 角色此刻的意识流是怎样的？是清晰、混乱、跳跃、还是凝滞？捕捉其原始念头与联想。\n\n第二步：单句分子重构手术（“手术层”核心循环——分类驱动，准则护航）\n对“文学基因图谱”中的每一行，执行以下循环：\n\n读取分类指令： 查看该行标签（例如：MS-B 绵长情感状态）。这直接告诉你，这一行的核心任务是“为一种持续的情感状态建立物理模型”。\n\n调用对应“手术方案”： 根据分类，从上述分类体系的“操作”部分，选择最适配的路径。例如，对于MS-B，核心操作是“调用准则六（意象种子），为此状态创造一个核心的、可延展的物理模型”。\n\n注入采集的原生信号： 将第一步采集的身体、环境、思维信号，作为原材料，注入到这个手术方案中。例如，采集到的身体信号是“一种弥漫的、沉重的空虚感”，环境信号是“房间里昏暗的、静止的光线”。\n\n在七大准则的框架下进行文学锻造：\n\n准则二（感知漏斗）检验： 我准备描写的这个“物理模型”（比如“骨头里掺了铅”），是否符合角色此刻的感知能力？它是从角色内部感受到的，还是作者外挂的？确保视角正确。\n\n准则一（战略投资）评估： 对于MS-B这类情感节点，值得进行战略投资。我构思的意象是否足够独特、精准，能成为读者理解角色此刻状态的关键锚点？是否比“他感到空虚”有质的飞跃？\n\n准则三（动词名词核能）优化： 在构建这个意象时，我使用的动词和名词是否足够有力？“掺了铅”的“掺”字，能否换成更意外的“熔铸”、“浇筑”？“重量”能否换成“坠感”？\n\n准则五（视角沉浸）确认： 整个描述是否保持了绝对的主观镜头？读者是否正在通过角色的身体去感受这种“铅的坠感”？\n\n准则六（种子培育）前瞻： 这个“铅的坠感”的意象，有没有可能在后续文本中，当角色再次感到类似情绪时，以变奏的形式再次出现？（如“那铅仿佛熔化了，变成冰冷的液体在血管里流”）。\n\n运用“精微自审五问”进行微调与激发：\n\n对于MS-B，特别适合问“定调”和“终极意象”。我创造的这个“铅骨”意象，是否一语定调了这种空虚的本质？它是否达到了唯一性和文学击穿力？\n\n从“分子级技艺库”中选择具体工具完成句子：\n\n可能用到“心理的实体建模”来构建“铅骨”模型。\n\n可能用到“通感的化合反应”，将内心的“空”与环境的“暗”与身体的“重”交融。\n\n产出“结晶”： 最终输出该行中文。例如：“一种空虚感弥漫开来” -> “他感到一种空旷，并非缺失了什么，而是骨头深处被悄然熔铸进了几克铅，一种向下的、沉默的重量自此生根，让最轻微的移动都显得费力。”\n\n第三步：段落节奏的脉搏设计（“织体层”局部整合）\n将重构后的句子放回段落，此时你不仅是外科医生，更是作曲家和指挥家：\n\n起承转合与分类组合： 一个段落往往由不同类别的句子交织而成。识别段落的情绪曲线。\n\n起（定调）： 可能由一个SP-A（定调场景） 或一个强烈的MS-A（瞬时情感脉冲） 开启。\n\n承（织体）： NS（叙事肌腱） 平滑推进，BP（肢体诗学） 和 SR（言语暗礁） 展开细节，MS（心灵地貌） 和 SP（感官棱镜） 互相映照，情绪纹理逐渐复杂。\n\n转（峰值）： 往往是MS-A、SR-A（冲突对话） 或BP-A（决定性动作） 的舞台，在此处应看到准则一（战略投资） 的集中体现，句式上可能出现“句式即心律”中的短促爆破或绵长撕裂。\n\n合（余韵）： 常用SP-B（情绪反射场景） 或一个意味深长的BP-B（揭示性微动作） 收尾，并充分利用TL（文本肺叶） 的留白，让情绪缓缓沉降。\n\n准则四（呼吸共生）的全面应用： 检查你的中文段落，其句子长短的排列、标点的密度、与原文TL标记的留白位置是否协同作用，共同塑造了段落应有的呼吸感。是窒息般的紧凑，还是沉思般的舒缓？\n\n第四步：冷酷自审与分子级调整（“质检层”终极审判）\n\n体验真实性核验（准则二）： 脱离角色，以读者身份朗读。是否每个细节都感觉真实、必然？有无“作者强行介入”的隔阂感？\n\n技巧融合度审查（准则一、三、五等）： 所有文学手法是否已完全溶解于体验之中？读者是首先被情感击中，事后才惊叹于语言的精妙，还是被华丽的辞藻挡在门外？\n\n语言密度压力测试（准则三）： 能否用更少的字，表达相同或更丰富的意味？删除所有冗余的“的”、“了”、可有可无的形容词。追求“增一字则多，减一字则少”的精准。\n\n读者通路压力测试（整体流畅性）： 想象一位挑剔的文学读者。他的注意力是被无缝吸入你的文字流，跟随角色的命运起伏，还是在某个地方被一个生硬的比喻、一个拗口的句式、一次突兀的视角切换给“卡”住了？确保通路绝对光滑。\n\n第五步：最终淬火——从“好”到“卓越”（“美学层”巅峰追求）\n\n词汇的原子置换（深化准则三）： 在全文范围内进行扫描，寻找那些“还行”但不够“绝”的词，用更具表现力、更精准、更新鲜的词汇替换。这不只是同义词替换，而是为每个情境寻找那个“唯一”的词。\n\n比喻的奇点升级（深化准则一、六）： 检查你在关键节点（MS-A, SP-A, IE等）使用的比喻或意象。它们是否已经很好？能否升级到“令人过目不忘、成为文本标志”的境界？让它更独特，更深入，更具叙事潜能。\n\n句式的能量聚焦（呼应准则四）： 通过调整语序、使用倒装、并置、断句，将句子的情感能量聚焦于最需要强调的那个词或意象上，产生爆破效果。\n\n留白的战略部署（强化TL与准则四）： 不仅在格式上保留留白，更要在留白前后的文字中，营造出“此处无声胜有声”的张力，让空白本身成为情感的放大器。\n\n至高原则：精准的奢华\n所有操作，无论是加法（战略投资）还是减法（删除冗余），最终目的都是实现 “精准的奢华” 。即：用最精确、最必然、最具美学密度的语言，承载100%保真的角色体验。“奢华”不是堆砌，而是“必要性”的极致体现——每一个字都不可替代，每一个修辞都命中要害。",
     "custom_prompt_en_enable": false,
     "custom_prompt_en_data": "1.Strictly translate line by line according to the input. Do not split or merge lines.\n2.Control characters in the original text such as whitespace, escape characters, English code must be preserved in the translation as they are.\n3.Translate all text completely, except for control characters, including onomatopoeia, interjections, and proper nouns (such as character names), etc.\n4.Maintain colloquial wording and avoid formal/written language unless necessary. Even if the original text includes explicit descriptions, they must be faithfully reproduced without avoidance or toning down.",
     "auto_glossary_enable": false,

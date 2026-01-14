@@ -18,6 +18,7 @@ from module.Localizer.Localizer import Localizer
 from module.PromptBuilder import PromptBuilder
 from module.Response.ResponseChecker import ResponseChecker
 from module.Response.ResponseDecoder import ResponseDecoder
+from module.StreamingStats import StreamingStats
 from module.Text.TextHelper import TextHelper
 from module.TextProcessor import TextProcessor
 
@@ -70,6 +71,7 @@ class TranslatorTask(Base):
                 "row_count": len(items),
                 "input_tokens": 0,
                 "output_tokens": 0,
+                "warning": False,
             }
 
         # 生成请求提示词
@@ -88,10 +90,21 @@ class TranslatorTask(Base):
                 "row_count": 0,
                 "input_tokens": 0,
                 "output_tokens": 0,
+                "warning": False,
             }
 
-        # 提取回复内容
-        dsts, glossarys = ResponseDecoder().decode(response_result)
+        # 提取回复内容（传入思考内容用于兜底策略）
+        decoder = ResponseDecoder()
+        dsts, glossarys = decoder.decode(response_result, response_think if response_think else "")
+        
+        # 记录是否使用了兜底策略
+        used_thinking_fallback = decoder.used_thinking_fallback
+        if used_thinking_fallback:
+            StreamingStats.add_fallback_usage("thinking_extract")
+        
+        # 记录 Token 使用量
+        if input_tokens or output_tokens:
+            StreamingStats.add_tokens(input_tokens or 0, output_tokens or 0)
 
         # 检查回复内容
         # TODO - 当前逻辑下任务不会跨文件，所以一个任务的 TextType 都是一样的，有效，但是十分的 UGLY
@@ -150,18 +163,32 @@ class TranslatorTask(Base):
             console_log
         )
 
+        # 判断是否有告警（使用了兜底/容错策略但仍然成功）
+        has_warning = used_thinking_fallback or decoder.used_line_realignment or decoder.used_codeblock_cleanup
+
         # 返回任务结果
         if updated_count > 0:
             return {
                 "row_count": updated_count,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "warning": has_warning,
+                "failed": False,
             }
         else:
+            # 翻译失败：没有任何条目被成功更新
+            # 收集失败原因
+            fail_reasons = set(
+                __class__.get_error_text(v) for v in checks
+                if v != ResponseChecker.Error.NONE
+            )
             return {
                 "row_count": 0,
-                "input_tokens": 0,
-                "output_tokens": 0,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "warning": False,
+                "failed": True,
+                "fail_reason": "、".join(fail_reasons) if fail_reasons else "未知错误",
             }
 
     # 合并术语表

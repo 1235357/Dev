@@ -64,6 +64,10 @@ class TaskRequester(Base):
         self.config = config
         self.platform = platform
         self.current_round = current_round
+        self.last_error = ""
+        self.had_retry = False
+        self.partial_think = ""
+        self.partial_result = ""
 
     # 重置
     @classmethod
@@ -117,7 +121,7 @@ class TaskRequester(Base):
     # 获取客户端
     @classmethod
     @lru_cache(maxsize = None)
-    def get_client(cls, url: str, key: str, format: Base.APIFormat, timeout: int, max_retries: int) -> openai.OpenAI | genai.Client | anthropic.Anthropic:
+    def get_client(cls, url: str, key: str, format: Base.APIFormat, max_retries: int) -> openai.OpenAI | genai.Client | anthropic.Anthropic:
         # connect (连接超时):
         #   建议值: 5.0 到 10.0 秒。
         #   解释: 建立到 LLM API 服务器的 TCP 连接。通常这个过程很快，但网络波动时可能需要更长时间。设置过短可能导致在网络轻微抖动时连接失败。
@@ -241,6 +245,11 @@ class TaskRequester(Base):
 
     # 发起请求
     def request(self, messages: list[dict], task_id: str = None) -> tuple[bool, str, int, int]:
+        self.last_error = ""
+        self.had_retry = False
+        self.partial_think = ""
+        self.partial_result = ""
+
         args: dict[str, float] = {}
         if self.platform.get("top_p_custom_enable") == True:
             args["top_p"] = self.platform.get("top_p")
@@ -319,7 +328,6 @@ class TaskRequester(Base):
                     url = self.platform.get("api_url"),
                     key = current_key,
                     format = self.platform.get("api_format"),
-                    timeout = self.config.request_timeout,
                     max_retries = self.config.request_max_retries,
                 )
 
@@ -331,6 +339,7 @@ class TaskRequester(Base):
             # 提取回复的文本内容
             response_result = response.choices[0].message.content
         except Exception as e:
+            self.last_error = str(e)
             self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
 
@@ -395,7 +404,6 @@ class TaskRequester(Base):
                     url = self.platform.get("api_url"),
                     key = current_key,
                     format = self.platform.get("api_format"),
-                    timeout = self.config.request_timeout,
                     max_retries = self.config.request_max_retries,
                 )
 
@@ -417,6 +425,7 @@ class TaskRequester(Base):
                 response_think = ""
                 response_result = message.content.strip()
         except Exception as e:
+            self.last_error = str(e)
             self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
 
@@ -488,7 +497,6 @@ class TaskRequester(Base):
                     url = self.platform.get("api_url"),
                     key = current_key,
                     format = self.platform.get("api_format"),
-                    timeout = self.config.request_timeout,
                     max_retries = self.config.request_max_retries,
                 )
 
@@ -509,6 +517,7 @@ class TaskRequester(Base):
                 if len(result_messages) > 0:
                     response_result = result_messages[-1].text.strip()
         except Exception as e:
+            self.last_error = str(e)
             self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
 
@@ -566,7 +575,6 @@ class TaskRequester(Base):
                     url = self.platform.get("api_url"),
                     key = current_key,
                     format = self.platform.get("api_format"),
-                    timeout = self.config.request_timeout,
                     max_retries = self.config.request_max_retries,
                 )
 
@@ -589,6 +597,7 @@ class TaskRequester(Base):
             else:
                 response_think = ""
         except Exception as e:
+            self.last_error = str(e)
             self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
 
@@ -659,6 +668,8 @@ class TaskRequester(Base):
             stall_seconds = self.config.stream_stall_timeout_seconds if isinstance(self.config.stream_stall_timeout_seconds, int) and self.config.stream_stall_timeout_seconds > 0 else 120
             retry_attempts = self.config.stream_retry_attempts if isinstance(self.config.stream_retry_attempts, int) and self.config.stream_retry_attempts > 0 else 3
             backoff_seconds = self.config.stream_retry_backoff_seconds if isinstance(self.config.stream_retry_backoff_seconds, int) and self.config.stream_retry_backoff_seconds >= 0 else 2
+            first_chunk_timeout = int(self.config.stream_first_chunk_timeout_seconds or 0) if isinstance(self.config.stream_first_chunk_timeout_seconds, int) and self.config.stream_first_chunk_timeout_seconds > 0 else 0
+            first_chunk_timeout = int(self.config.stream_first_chunk_timeout_seconds or 0) if isinstance(self.config.stream_first_chunk_timeout_seconds, int) and self.config.stream_first_chunk_timeout_seconds > 0 else 0
 
             for attempt in range(retry_attempts):
                 response_think = ""
@@ -675,6 +686,8 @@ class TaskRequester(Base):
                     last_chunk_ts = {"t": None}
                     first_chunk_ts = {"t": None}
                     stalled = {"flag": False}
+                    request_start_ts = time.time()
+                    request_start_ts = time.time()
 
                     stream_client = client if attempt == 0 else __class__.new_client_no_timeout(
                         url=self.platform.get("api_url"),
@@ -685,6 +698,8 @@ class TaskRequester(Base):
                     stream = stream_client.chat.completions.create(
                         **self.generate_dashscope_deepseek_args(messages, args)
                     )
+
+                    request_start_ts = time.time()
 
                     if task_id:
                         StreamingStats.update_task(
@@ -703,10 +718,24 @@ class TaskRequester(Base):
                             chunks=chunk_count,
                         )
 
-                    def watchdog() -> None:
+                    def watchdog(
+                        stall_seconds: int = stall_seconds,
+                        first_chunk_timeout: int = first_chunk_timeout,
+                        request_start_ts: float = request_start_ts,
+                    ) -> None:
                         while not abort_event.is_set():
                             t = last_chunk_ts["t"]
-                            if t is not None and time.time() - t > stall_seconds:
+                            now = time.time()
+                            if t is None and first_chunk_timeout > 0 and now - request_start_ts > first_chunk_timeout:
+                                stalled["flag"] = True
+                                try:
+                                    close = getattr(stream, "close", None)
+                                    close() if callable(close) else None
+                                except Exception:
+                                    pass
+                                abort_event.set()
+                                break
+                            if t is not None and now - t > stall_seconds:
                                 stalled["flag"] = True
                                 try:
                                     close = getattr(stream, "close", None)
@@ -726,6 +755,8 @@ class TaskRequester(Base):
                             if first_chunk_ts["t"] is None:
                                 first_chunk_ts["t"] = now
                             if stalled["flag"]:
+                                if first_chunk_ts["t"] is None and first_chunk_timeout > 0:
+                                    raise TimeoutError(f"stream stalled: no first chunk for {first_chunk_timeout}s")
                                 raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
 
                             chunk_count += 1
@@ -793,6 +824,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[阿里百炼 DeepSeek] 请求超时 (504)，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     raise e
@@ -802,6 +836,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[阿里百炼 DeepSeek] 服务端异常 ({status})，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     raise e
@@ -811,6 +848,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[阿里百炼 DeepSeek] 连接中断，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     self.error(f"[阿里百炼-DeepSeek] 流式传输中断: {e}")
@@ -834,6 +874,7 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
             
             # 403 错误 - 检查是否为黑名单封禁
             error_msg = str(e)
@@ -857,6 +898,7 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
             
             # 所有 Key 被封禁的异常（理论上不会触发，因为第一个封禁就停止了）
             self.error(f"[致命] {e}")
@@ -868,6 +910,9 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
+            self.partial_think = response_think if 'response_think' in locals() else ""
+            self.partial_result = response_result if 'response_result' in locals() else ""
             
             self.error(f"{Localizer.get().log_task_fail}", e)
             
@@ -879,8 +924,8 @@ class TaskRequester(Base):
                     "platform": self.platform,
                     "messages": messages,
                     "error_trace": str(e),
-                    "partial_think": response_think if 'response_think' in locals() else "",
-                    "partial_result": response_result if 'response_result' in locals() else "",
+                    "partial_think": self.partial_think,
+                    "partial_result": self.partial_result,
                 }
             )
             return True, None, None, None, None
@@ -940,6 +985,7 @@ class TaskRequester(Base):
             stall_seconds = self.config.stream_stall_timeout_seconds if isinstance(self.config.stream_stall_timeout_seconds, int) and self.config.stream_stall_timeout_seconds > 0 else 120
             retry_attempts = self.config.stream_retry_attempts if isinstance(self.config.stream_retry_attempts, int) and self.config.stream_retry_attempts > 0 else 3
             backoff_seconds = self.config.stream_retry_backoff_seconds if isinstance(self.config.stream_retry_backoff_seconds, int) and self.config.stream_retry_backoff_seconds >= 0 else 2
+            first_chunk_timeout = int(self.config.stream_first_chunk_timeout_seconds or 0) if isinstance(self.config.stream_first_chunk_timeout_seconds, int) and self.config.stream_first_chunk_timeout_seconds > 0 else 0
 
             for attempt in range(retry_attempts):
                 response_think = ""
@@ -967,6 +1013,8 @@ class TaskRequester(Base):
                         **self.generate_nvidia_deepseek_args(messages, args),
                     )
 
+                    request_start_ts = time.time()
+
                     if task_id:
                         StreamingStats.update_task(
                             task_id=task_id,
@@ -984,10 +1032,24 @@ class TaskRequester(Base):
                             chunks=chunk_count,
                         )
 
-                    def watchdog() -> None:
+                    def watchdog(
+                        stall_seconds: int = stall_seconds,
+                        first_chunk_timeout: int = first_chunk_timeout,
+                        request_start_ts: float = request_start_ts,
+                    ) -> None:
                         while not abort_event.is_set():
                             t = last_chunk_ts["t"]
-                            if t is not None and time.time() - t > stall_seconds:
+                            now = time.time()
+                            if t is None and first_chunk_timeout > 0 and now - request_start_ts > first_chunk_timeout:
+                                stalled["flag"] = True
+                                try:
+                                    close = getattr(stream, "close", None)
+                                    close() if callable(close) else None
+                                except Exception:
+                                    pass
+                                abort_event.set()
+                                break
+                            if t is not None and now - t > stall_seconds:
                                 stalled["flag"] = True
                                 try:
                                     close = getattr(stream, "close", None)
@@ -1007,6 +1069,8 @@ class TaskRequester(Base):
                             if first_chunk_ts["t"] is None:
                                 first_chunk_ts["t"] = now
                             if stalled["flag"]:
+                                if first_chunk_ts["t"] is None and first_chunk_timeout > 0:
+                                    raise TimeoutError(f"stream stalled: no first chunk for {first_chunk_timeout}s")
                                 raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
 
                             chunk_count += 1
@@ -1074,6 +1138,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[NVIDIA DeepSeek] 请求超时 (504)，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     raise e
@@ -1083,6 +1150,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[NVIDIA DeepSeek] 服务端异常 ({status})，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     raise e
@@ -1092,6 +1162,9 @@ class TaskRequester(Base):
                         import time
                         wait_time = backoff_seconds * (attempt + 1)
                         self.warning(f"[NVIDIA DeepSeek] 连接中断，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        self.had_retry = True
+                        if task_id:
+                            StreamingStats.add_retry()
                         time.sleep(wait_time)
                         continue
                     raise e
@@ -1114,6 +1187,7 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
             
             # 403 错误 - 检查是否为黑名单封禁
             error_msg = str(e)
@@ -1137,6 +1211,7 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
             
             # 所有 Key 被封禁的异常
             self.error(f"[致命] {e}")
@@ -1148,6 +1223,9 @@ class TaskRequester(Base):
             if task_id:
                 StreamingStats.complete_task(task_id, success=False, error=str(e))
                 StreamingStats.remove_task(task_id)
+            self.last_error = str(e)
+            self.partial_think = response_think if 'response_think' in locals() else ""
+            self.partial_result = response_result if 'response_result' in locals() else ""
             
             self.error(f"{Localizer.get().log_task_fail}", e)
 
@@ -1159,8 +1237,8 @@ class TaskRequester(Base):
                     "platform": self.platform,
                     "messages": messages,
                     "error_trace": str(e),
-                    "partial_think": response_think if 'response_think' in locals() else "",
-                    "partial_result": response_result if 'response_result' in locals() else "",
+                    "partial_think": self.partial_think,
+                    "partial_result": self.partial_result,
                 }
             )
             return True, None, None, None, None

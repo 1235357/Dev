@@ -76,41 +76,44 @@ class TranslatorTask(Base):
             }
 
         # 生成请求提示词
+        console_log = []
+        response_think = ""
+        response_result = ""
+        input_tokens = 0
+        output_tokens = 0
+        glossarys: list[dict[str, str]] = []
+
         if self.platform.get("api_format") != Base.APIFormat.SAKURALLM:
             self.messages, console_log = self.prompt_builder.generate_prompt(srcs, samples, precedings, local_flag)
         else:
             self.messages, console_log = self.prompt_builder.generate_prompt_sakura(srcs)
 
-        # 发起请求
         requester = TaskRequester(self.config, self.platform, current_round)
         skip, response_think, response_result, input_tokens, output_tokens = requester.request(self.messages, task_id=task_id)
 
-        # 如果请求结果标记为 skip，即有错误发生，则跳过本次循环
         if skip == True:
             return {
                 "row_count": 0,
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "warning": False,
+                "failed": True,
+                "fail_reason": requester.last_error or "请求失败",
             }
 
-        # 提取回复内容（传入思考内容用于兜底策略）
         decoder = ResponseDecoder()
         dsts, glossarys = decoder.decode(response_result, response_think if response_think else "")
-        
-        # 记录是否使用了兜底策略
+
         used_thinking_fallback = decoder.used_thinking_fallback
+        used_decoder_realign = decoder.used_line_realignment
+        used_decoder_codeblock_cleanup = decoder.used_codeblock_cleanup
         if used_thinking_fallback:
             StreamingStats.add_fallback_usage("thinking_extract")
-        
-        # 记录 Token 使用量
         if input_tokens or output_tokens:
             StreamingStats.add_tokens(input_tokens or 0, output_tokens or 0)
 
-        # 检查回复内容
-        # TODO - 当前逻辑下任务不会跨文件，所以一个任务的 TextType 都是一样的，有效，但是十分的 UGLY
-        # 返回值包含 checks 和可能被容错机制修正的 dsts
-        checks, dsts = self.response_checker.check(srcs, dsts, self.items[0].get_text_type())
+        text_type = self.items[0].get_text_type()
+        checks, dsts = self.response_checker.check(srcs, dsts, text_type)
 
         # 当任务失败且是单条目任务时，更新重试次数
         if any(v != ResponseChecker.Error.NONE for v in checks) != None and len(self.items) == 1:
@@ -187,7 +190,12 @@ class TranslatorTask(Base):
         )
 
         # 判断是否有告警（使用了兜底/容错策略但仍然成功）
-        has_warning = used_thinking_fallback or decoder.used_line_realignment or decoder.used_codeblock_cleanup
+        has_warning = bool(
+            used_thinking_fallback
+            or used_decoder_realign
+            or used_decoder_codeblock_cleanup
+            or (updated_count > 0 and any(v != ResponseChecker.Error.NONE for v in checks))
+        )
 
         # 返回任务结果
         if updated_count > 0:
@@ -206,54 +214,6 @@ class TranslatorTask(Base):
                 __class__.get_error_text(v) for v in checks
                 if v != ResponseChecker.Error.NONE
             )
-            should_split_retry = (
-                len(items) >= 2 and
-                all(v in (ResponseChecker.Error.FAIL_DATA, ResponseChecker.Error.FAIL_LINE_COUNT) for v in checks)
-            )
-            if should_split_retry:
-                mid = len(items) // 2
-                left_items = items[:mid]
-                right_items = items[mid:]
-
-                if left_items and right_items:
-                    left_task = TranslatorTask(self.config, self.platform, local_flag, left_items, precedings)
-                    right_task = TranslatorTask(self.config, self.platform, local_flag, right_items, precedings)
-
-                    left_result = left_task.start(current_round, task_id=task_id)
-                    right_result = right_task.start(current_round, task_id=task_id)
-
-                    combined_row_count = int(left_result.get("row_count", 0) or 0) + int(right_result.get("row_count", 0) or 0)
-                    combined_input_tokens = int(left_result.get("input_tokens", 0) or 0) + int(right_result.get("input_tokens", 0) or 0)
-                    combined_output_tokens = int(right_result.get("output_tokens", 0) or 0) + int(left_result.get("output_tokens", 0) or 0)
-                    combined_zh_chars = int(left_result.get("zh_chars", 0) or 0) + int(right_result.get("zh_chars", 0) or 0)
-                    combined_warning = bool(left_result.get("warning", False) or right_result.get("warning", False) or combined_row_count > 0)
-                    combined_failed = bool(left_result.get("failed", False) and right_result.get("failed", False) and combined_row_count == 0)
-
-                    combined_fail_reason_parts = []
-                    if left_result.get("failed", False):
-                        combined_fail_reason_parts.append(str(left_result.get("fail_reason", "") or "").strip())
-                    if right_result.get("failed", False):
-                        combined_fail_reason_parts.append(str(right_result.get("fail_reason", "") or "").strip())
-                    combined_fail_reason_parts = [x for x in combined_fail_reason_parts if x]
-
-                    if combined_row_count > 0:
-                        return {
-                            "row_count": combined_row_count,
-                            "input_tokens": input_tokens + combined_input_tokens,
-                            "output_tokens": output_tokens + combined_output_tokens,
-                            "zh_chars": combined_zh_chars,
-                            "warning": True,
-                            "failed": False,
-                        }
-                    return {
-                        "row_count": 0,
-                        "input_tokens": input_tokens + combined_input_tokens,
-                        "output_tokens": output_tokens + combined_output_tokens,
-                        "zh_chars": 0,
-                        "warning": False,
-                        "failed": combined_failed,
-                        "fail_reason": "、".join([x for x in combined_fail_reason_parts if x]) or "未知错误",
-                    }
 
             return {
                 "row_count": 0,

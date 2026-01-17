@@ -1,4 +1,5 @@
 import concurrent.futures
+import dataclasses
 import json
 import os
 import re
@@ -6,6 +7,7 @@ import shutil
 import threading
 import time
 import webbrowser
+from collections import deque
 from itertools import zip_longest
 
 import httpx
@@ -254,18 +256,25 @@ class Translator(Base):
                 self.config.preceding_lines_threshold,
             )
 
-            # 仅在第一轮启用参考上文功能
-            if current_round > 0:
+            if self.config.preceding_only_first_round == True and current_round > 0:
                 precedings = [[] for _ in range(len(precedings))]
 
             # 生成翻译任务
             self.print("")
-            tasks: list[TranslatorTask] = []
+            task_specs: list[tuple[list[CacheItem], list[CacheItem], int, int, int]] = []
             with ProgressBar(transient = False) as progress:
                 pid = progress.new()
-                for items, precedings in zip(chunks, precedings):
+                for items, preceding_items in zip(chunks, precedings):
                     progress.update(pid, advance = 1, total = len(chunks))
-                    tasks.append(TranslatorTask(self.config, self.platform, local_flag, items, precedings))
+                    task_specs.append(
+                        (
+                            items,
+                            preceding_items,
+                            int(self.config.input_token_threshold or 0),
+                            int(self.config.preceding_lines_threshold or 0),
+                            0,
+                        )
+                    )
 
             # 打印日志
             self.info(Localizer.get().translator_task_generation_log.replace("{COUNT}", str(len(chunks))))
@@ -290,47 +299,130 @@ class Translator(Base):
             # 启用流式统计追踪
             from module.StreamingStats import StreamingStats
             StreamingStats.reset()
-            StreamingStats.enable(total = len(tasks))
+            StreamingStats.enable(total = len(task_specs))
             
             # 创建 TaskTracker：底部常驻动态进度条
             tracker = TaskTracker(
-                total=len(tasks), 
+                total=len(task_specs), 
                 task_name=f"第 {current_round + 1} 轮翻译",
                 max_concurrent=max_workers,
             )
             tracker.retry_round = current_round  # 同步当前轮次
             set_current_tracker(tracker)
-            
-            # 使用信号量严格控制并发提交，确保 Tracker 显示的活跃数与实际运行线程数一致
-            semaphore = threading.BoundedSemaphore(max_workers)
+
+            def split_spec(
+                items: list[CacheItem],
+                base_precedings: list[CacheItem],
+                input_threshold: int,
+                preceding_threshold: int,
+                depth: int,
+            ) -> tuple[tuple[list[CacheItem], list[CacheItem], int, int, int], tuple[list[CacheItem], list[CacheItem], int, int, int]] | None:
+                if len(items) < 2:
+                    return None
+
+                total_tokens = sum(int(it.get_token_count() or 0) for it in items)
+                target = max(1, total_tokens // 2)
+                acc = 0
+                split_at = 0
+                for i, it in enumerate(items):
+                    acc += int(it.get_token_count() or 0)
+                    if acc >= target and i < len(items) - 1:
+                        split_at = i + 1
+                        break
+                if split_at <= 0:
+                    split_at = max(1, len(items) // 2)
+
+                left_items = items[:split_at]
+                right_items = items[split_at:]
+                if not left_items or not right_items:
+                    return None
+
+                next_input = max(1, int(input_threshold or 0) // 2)
+                if self.config.rolling_split_halve_preceding_threshold == True:
+                    next_preceding = max(1, int(preceding_threshold or 0) // 2)
+                else:
+                    next_preceding = max(1, int(preceding_threshold or 0))
+
+                base_trimmed = base_precedings[-next_preceding:] if base_precedings else []
+                left_precedings = base_trimmed
+
+                if str(self.config.rolling_split_right_preceding_mode or "").strip() == "left_head":
+                    right_context = left_items
+                    right_precedings = right_context[:next_preceding] if right_context else []
+                else:
+                    right_context = (base_trimmed + left_items)
+                    right_precedings = right_context[-next_preceding:] if right_context else []
+
+                return (
+                    (left_items, left_precedings, next_input, next_preceding, depth + 1),
+                    (right_items, right_precedings, next_input, next_preceding, depth + 1),
+                )
+
+            def build_config(input_threshold: int, preceding_threshold: int) -> Config:
+                try:
+                    return dataclasses.replace(
+                        self.config,
+                        input_token_threshold=int(input_threshold or self.config.input_token_threshold),
+                        preceding_lines_threshold=int(preceding_threshold or self.config.preceding_lines_threshold),
+                    )
+                except Exception:
+                    return self.config
+
+            pending = deque(task_specs)
+            inflight: dict[concurrent.futures.Future, tuple[str, tuple[list[CacheItem], list[CacheItem], int, int, int]]] = {}
+            task_counter = 0
+            max_split_depth = int(self.config.rolling_split_max_depth or 0) if isinstance(self.config.rolling_split_max_depth, int) and self.config.rolling_split_max_depth > 0 else 10
+            min_split_input_threshold = int(self.config.rolling_split_min_input_token_threshold or 0) if isinstance(self.config.rolling_split_min_input_token_threshold, int) and self.config.rolling_split_min_input_token_threshold > 0 else 0
+            rolling_split_enable = self.config.rolling_split_retry_enable == True
 
             with tracker:
                 with concurrent.futures.ThreadPoolExecutor(max_workers = max_workers, thread_name_prefix = Engine.TASK_PREFIX) as executor:
-                    for i, task in enumerate(tasks):
-                        # 检测是否需要停止任务
-                        # 目的是绕过限流器，快速结束所有剩余任务
+                    while pending or inflight:
                         if Engine.get().get_status() == Base.TaskStatus.STOPPING:
-                            set_current_tracker(None)
-                            return None
+                            break
 
-                        # 获取信号量（带超时以响应停止信号）
-                        while not semaphore.acquire(timeout=0.1):
-                            if Engine.get().get_status() == Base.TaskStatus.STOPPING:
-                                set_current_tracker(None)
-                                return None
+                        while pending and len(inflight) < max_workers:
+                            items, preceding_items, in_thr, pre_thr, depth = pending.popleft()
+                            task_limiter.wait()
 
-                        task_limiter.wait()
-                        
-                        # 开始任务追踪
-                        task_id = f"task_{i}"
-                        tracker.start_task(task_id, description=f"任务 {i+1}")
-                        
-                        future = executor.submit(task.start, current_round, task_id)
-                        # 任务完成时释放信号量
-                        # 【重要】必须先执行 tracker 更新回调，再释放信号量
-                        # 否则可能出现旧任务未从 tracker 清除，新任务就已添加，导致 tracker 显示的活跃数超过上限
-                        future.add_done_callback(lambda f, tid=task_id: self.task_done_callback_with_tracker(f, tid, tracker))
-                        future.add_done_callback(lambda f: semaphore.release())
+                            task_counter += 1
+                            task_id = f"task_{task_counter}"
+                            tracker.start_task(task_id, description=f"任务 {task_counter}")
+
+                            cfg = build_config(in_thr, pre_thr)
+                            task = TranslatorTask(cfg, self.platform, local_flag, items, preceding_items)
+                            future = executor.submit(task.start, current_round, task_id)
+                            inflight[future] = (task_id, (items, preceding_items, in_thr, pre_thr, depth))
+
+                        if not inflight:
+                            continue
+
+                        done, _ = concurrent.futures.wait(inflight.keys(), timeout=0.2, return_when=concurrent.futures.FIRST_COMPLETED)
+                        for f in done:
+                            task_id, spec = inflight.pop(f)
+                            try:
+                                result = f.result()
+                            except Exception as e:
+                                error_msg = str(e)[:50] if e else "未知错误"
+                                tracker.complete_task(task_id, success=False, error=error_msg)
+                                self.error(f"{Localizer.get().log_task_fail}", e)
+                                continue
+
+                            self.process_task_result_with_tracker(result, task_id, tracker)
+
+                            is_failed = bool(result.get("failed", False))
+                            if is_failed and rolling_split_enable:
+                                items, preceding_items, in_thr, pre_thr, depth = spec
+                                if depth < max_split_depth and len(items) >= 2:
+                                    if min_split_input_threshold > 0 and int(in_thr or 0) <= min_split_input_threshold:
+                                        continue
+                                    split = split_spec(items, preceding_items, in_thr, pre_thr, depth)
+                                    if split is not None:
+                                        left_spec, right_spec = split
+                                        pending.append(left_spec)
+                                        pending.append(right_spec)
+                                        tracker.increase_total(1)
+                                        StreamingStats.increase_total(1)
             
             # 结束本轮任务追踪
             set_current_tracker(None)
@@ -673,65 +765,56 @@ class Translator(Base):
         try:
             # 获取结果
             result = future.result()
-
-            # 结果为空则跳过后续的更新步骤
-            if not isinstance(result, dict) or len(result) == 0:
-                # 任务失败（无结果）
-                tracker.complete_task(task_id, success=False, error="空结果")
-                return
-
-            # 记录数据
-            input_tokens = result.get("input_tokens", 0)
-            output_tokens = result.get("output_tokens", 0)
-            has_warning = result.get("warning", False)
-            
-            with self.data_lock:
-                new = {}
-                new["start_time"] = self.extras.get("start_time", 0)
-                new["total_line"] = self.extras.get("total_line", 0)
-                new["line"] = self.extras.get("line", 0) + result.get("row_count", 0)
-                new["total_tokens"] = self.extras.get("total_tokens", 0) + input_tokens + output_tokens
-                new["total_input_tokens"] = self.extras.get("total_input_tokens", 0) + input_tokens
-                new["total_output_tokens"] = self.extras.get("total_output_tokens", 0) + output_tokens
-                new["total_zh_chars"] = self.extras.get("total_zh_chars", 0) + result.get("zh_chars", 0)
-                new["time"] = time.time() - self.extras.get("start_time", 0)
-                self.extras = new
-
-            # 更新翻译进度
-            self.cache_manager.get_project().set_extras(self.extras)
-
-            # 更新翻译状态
-            self.cache_manager.get_project().set_status(Base.TranslationStatus.PROCESSING)
-
-            # 请求保存缓存文件
-            self.cache_manager.require_save_to_file(self.config.output_folder)
-
-            # 判断任务是否失败
-            is_failed = result.get("failed", False)
-            fail_reason = result.get("fail_reason", "")
-            
-            # 更新 TaskTracker（区分成功、警告和失败）
-            if is_failed:
-                tracker.complete_task(
-                    task_id, 
-                    success=False,
-                    error=fail_reason,
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                )
-            else:
-                tracker.complete_task(
-                    task_id, 
-                    success=True,
-                    warning=has_warning,
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                )
-
-            # 触发翻译进度更新事件
-            self.emit(Base.Event.TRANSLATION_UPDATE, self.extras)
+            self.process_task_result_with_tracker(result, task_id, tracker)
         except Exception as e:
             # 任务失败
             error_msg = str(e)[:50] if e else "未知错误"
             tracker.complete_task(task_id, success=False, error=error_msg)
             self.error(f"{Localizer.get().log_task_fail}", e)
+
+    def process_task_result_with_tracker(self, result: dict, task_id: str, tracker: TaskTracker) -> None:
+        if not isinstance(result, dict) or len(result) == 0:
+            tracker.complete_task(task_id, success=False, error="空结果")
+            return
+
+        input_tokens = int(result.get("input_tokens", 0) or 0)
+        output_tokens = int(result.get("output_tokens", 0) or 0)
+        has_warning = bool(result.get("warning", False))
+
+        with self.data_lock:
+            new = {}
+            new["start_time"] = self.extras.get("start_time", 0)
+            new["total_line"] = self.extras.get("total_line", 0)
+            new["line"] = self.extras.get("line", 0) + int(result.get("row_count", 0) or 0)
+            new["total_tokens"] = self.extras.get("total_tokens", 0) + input_tokens + output_tokens
+            new["total_input_tokens"] = self.extras.get("total_input_tokens", 0) + input_tokens
+            new["total_output_tokens"] = self.extras.get("total_output_tokens", 0) + output_tokens
+            new["total_zh_chars"] = self.extras.get("total_zh_chars", 0) + int(result.get("zh_chars", 0) or 0)
+            new["time"] = time.time() - self.extras.get("start_time", 0)
+            self.extras = new
+
+        self.cache_manager.get_project().set_extras(self.extras)
+        self.cache_manager.get_project().set_status(Base.TranslationStatus.PROCESSING)
+        self.cache_manager.require_save_to_file(self.config.output_folder)
+
+        is_failed = bool(result.get("failed", False))
+        fail_reason = str(result.get("fail_reason", "") or "").strip()
+
+        if is_failed:
+            tracker.complete_task(
+                task_id,
+                success=False,
+                error=fail_reason or "失败",
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+            )
+        else:
+            tracker.complete_task(
+                task_id,
+                success=True,
+                warning=has_warning,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+            )
+
+        self.emit(Base.Event.TRANSLATION_UPDATE, self.extras)

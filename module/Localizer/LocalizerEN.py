@@ -338,7 +338,7 @@ class LocalizerEN(LocalizerZH):
     basic_settings_page_request_timeout_content: str = (
         "Maximum time (seconds) to wait for non-streaming requests, 0 = disabled (no timeout)"
         "<br>"
-        "Streaming requests do not use this timeout; use the streaming stall timeout instead"
+        "Streaming requests do not use this timeout; use Streaming First Chunk Timeout and Streaming Stall Timeout instead"
     )
     basic_settings_page_max_round_title: str = "Maximum Rounds"
     basic_settings_page_max_round_content: str = "After completing a round of tasks, failed tasks will be retried in a new round until all are completed or the round threshold is reached"
@@ -407,6 +407,12 @@ class LocalizerEN(LocalizerZH):
         "<br>"
         "Once stalled, an exception is raised and retry logic will run"
     )
+    expert_settings_page_stream_first_chunk_timeout_seconds_title: str = "Streaming First Chunk Timeout (s)"
+    expert_settings_page_stream_first_chunk_timeout_seconds_desc: str = (
+        "After a streaming request is sent but before any chunk is received, how long to wait before treating it as abnormal"
+        "<br>"
+        "Once reached, an exception is raised and retry logic will run; 0 = disabled (wait forever)"
+    )
     expert_settings_page_stream_retry_attempts_title: str = "Streaming Retry Attempts"
     expert_settings_page_stream_retry_attempts_desc: str = (
         "Maximum attempts for streaming retries (including the first attempt)"
@@ -415,6 +421,44 @@ class LocalizerEN(LocalizerZH):
     expert_settings_page_stream_retry_backoff_seconds_desc: str = (
         "Base wait time between retries; actual wait is base × attempt_index, 0 = immediate"
     )
+    expert_settings_page_preceding_only_first_round_title: str = "Preceding Context Only in First Round"
+    expert_settings_page_preceding_only_first_round_desc: str = (
+        "When enabled, only round 1 tasks include preceding context; later rounds do not"
+        "<br>"
+        "When disabled, all rounds and rolling split retry subtasks include preceding context"
+    )
+    expert_settings_page_rolling_split_retry_enable_title: str = "Rolling Split Retry on Failure"
+    expert_settings_page_rolling_split_retry_enable_desc: str = (
+        "On any translation failure (timeout, stall, line mismatch, data format error, etc.), keep continuity and split by half then retry immediately"
+        "<br>"
+        "Helps keep concurrency utilized and reduces idle waiting for next rounds"
+    )
+    expert_settings_page_rolling_split_max_depth_title: str = "Rolling Split Max Depth"
+    expert_settings_page_rolling_split_max_depth_desc: str = (
+        "Maximum recursion depth for halving splits; larger values allow finer splits"
+    )
+    expert_settings_page_rolling_split_min_input_token_threshold_title: str = "Rolling Split Min Input Threshold"
+    expert_settings_page_rolling_split_min_input_token_threshold_desc: str = (
+        "Stop splitting when the subtask input threshold is less than or equal to this value"
+        "<br>"
+        "0 = no limit (only max depth applies)"
+    )
+    expert_settings_page_rolling_split_halve_preceding_threshold_title: str = "Halve Preceding Threshold When Splitting"
+    expert_settings_page_rolling_split_halve_preceding_threshold_desc: str = (
+        "When enabled, each split also halves the preceding threshold (e.g., 60→30→15...)"
+        "<br>"
+        "When disabled, split subtasks keep the same preceding threshold"
+    )
+    expert_settings_page_rolling_split_right_preceding_mode_title: str = "Right Half Preceding Strategy"
+    expert_settings_page_rolling_split_right_preceding_mode_desc: str = (
+        "How to construct preceding context for the right half after splitting"
+        "<br>"
+        "• Tail continuity context: take the last N items from [original preceding tail + left-half tail], so the right half sees what immediately happened before it"
+        "<br>"
+        "• Left-half head: take the first N items of the left half (more like style/setting hints, weaker continuity)"
+    )
+    expert_settings_page_rolling_split_right_preceding_mode_item_tail_context: str = "Tail continuity context (preceding tail + left tail, recommended)"
+    expert_settings_page_rolling_split_right_preceding_mode_item_left_head: str = "Left-half head N items (style hints)"
 
     # 质量类通用
     quality_import: str = "Import"

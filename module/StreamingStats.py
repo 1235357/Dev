@@ -78,6 +78,7 @@ class StreamingStats:
     _fallback_line_tolerance: int = 0    # 行数容错
     _fallback_empty_tolerance: int = 0   # 空行容错
     _fallback_kana_tolerance: int = 0    # 假名容错
+    _fallback_line_realignment: int = 0  # 行数重对齐
     
     # 时间统计（用于计算平均值）
     _think_times: list[float] = []       # 思考耗时列表
@@ -115,6 +116,7 @@ class StreamingStats:
             cls._fallback_line_tolerance = 0
             cls._fallback_empty_tolerance = 0
             cls._fallback_kana_tolerance = 0
+            cls._fallback_line_realignment = 0
             cls._think_times = []
             cls._reply_times = []
             cls._total_times = []
@@ -271,6 +273,14 @@ class StreamingStats:
         """增加重试计数"""
         with cls._lock:
             cls._retry_count += 1
+
+    @classmethod
+    def increase_total(cls, delta: int) -> None:
+        delta = int(delta or 0)
+        if delta <= 0:
+            return
+        with cls._lock:
+            cls._total += delta
     
     @classmethod
     def add_warning(cls, warning_type: str = "通用") -> None:
@@ -291,6 +301,8 @@ class StreamingStats:
                 cls._fallback_empty_tolerance += 1
             elif fallback_type == "kana_tolerance":
                 cls._fallback_kana_tolerance += 1
+            elif fallback_type == "line_realignment":
+                cls._fallback_line_realignment += 1
     
     @classmethod
     def add_tokens(cls, input_tokens: int, output_tokens: int) -> None:
@@ -341,7 +353,8 @@ class StreamingStats:
                 cls._fallback_thinking_extract +
                 cls._fallback_line_tolerance +
                 cls._fallback_empty_tolerance +
-                cls._fallback_kana_tolerance
+                cls._fallback_kana_tolerance +
+                cls._fallback_line_realignment
             )
             
             return {
@@ -381,6 +394,7 @@ class StreamingStats:
                 "fallback_line_tolerance": cls._fallback_line_tolerance,
                 "fallback_empty_tolerance": cls._fallback_empty_tolerance,
                 "fallback_kana_tolerance": cls._fallback_kana_tolerance,
+                "fallback_line_realignment": cls._fallback_line_realignment,
                 
                 # 时间统计（秒）
                 "avg_think_time": avg_think_time,
@@ -496,6 +510,8 @@ class StreamingStats:
                 fallback_parts.append(f"思考提取:{stats['fallback_thinking_extract']}")
             if stats["fallback_line_tolerance"] > 0:
                 fallback_parts.append(f"行容错:{stats['fallback_line_tolerance']}")
+            if stats.get("fallback_line_realignment", 0) > 0:
+                fallback_parts.append(f"重对齐:{stats['fallback_line_realignment']}")
             if stats["fallback_empty_tolerance"] > 0:
                 fallback_parts.append(f"空行:{stats['fallback_empty_tolerance']}")
             if stats["fallback_kana_tolerance"] > 0:
@@ -557,6 +573,8 @@ class StreamingStats:
                 lines.append(f"  - 思考内容提取: {stats['fallback_thinking_extract']}次")
             if stats["fallback_line_tolerance"] > 0:
                 lines.append(f"  - 行数容错: {stats['fallback_line_tolerance']}次")
+            if stats.get("fallback_line_realignment", 0) > 0:
+                lines.append(f"  - 行数重对齐: {stats['fallback_line_realignment']}次")
             if stats["fallback_empty_tolerance"] > 0:
                 lines.append(f"  - 空行容错: {stats['fallback_empty_tolerance']}次")
             if stats["fallback_kana_tolerance"] > 0:

@@ -53,8 +53,15 @@ class Config():
     auto_process_prefix_suffix_preserved_text: bool = True
     result_checker_retry_count_threshold: bool = False
     stream_stall_timeout_seconds: int = 120
+    stream_first_chunk_timeout_seconds: int = 0
     stream_retry_attempts: int = 3
     stream_retry_backoff_seconds: int = 2
+    preceding_only_first_round: bool = True
+    rolling_split_retry_enable: bool = False
+    rolling_split_max_depth: int = 10
+    rolling_split_min_input_token_threshold: int = 256
+    rolling_split_halve_preceding_threshold: bool = True
+    rolling_split_right_preceding_mode: str = "tail_context"
 
     # ProjectPage
     source_language: BaseLanguage.Enum = BaseLanguage.Enum.JA
@@ -141,8 +148,15 @@ class Config():
         self.auto_process_prefix_suffix_preserved_text: bool = True
         self.result_checker_retry_count_threshold: bool = False
         self.stream_stall_timeout_seconds: int = 120
+        self.stream_first_chunk_timeout_seconds: int = 0
         self.stream_retry_attempts: int = 3
         self.stream_retry_backoff_seconds: int = 2
+        self.preceding_only_first_round: bool = True
+        self.rolling_split_retry_enable: bool = False
+        self.rolling_split_max_depth: int = 10
+        self.rolling_split_min_input_token_threshold: int = 256
+        self.rolling_split_halve_preceding_threshold: bool = True
+        self.rolling_split_right_preceding_mode: str = "tail_context"
 
         # TextPreservePage
         self.text_preserve_enable: bool = False

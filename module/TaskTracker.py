@@ -511,6 +511,16 @@ class TaskTracker:
                 "total_output_tokens": self._total_output_tokens,
                 "elapsed_time": time.time() - self.start_time,
             }
+
+    def increase_total(self, delta: int) -> None:
+        delta = int(delta or 0)
+        if delta <= 0:
+            return
+        with self._lock:
+            self.total += delta
+        if self._progress_task is not None:
+            self._progress.update(self._progress_task, total=self.total)
+        self._refresh()
     
     def print_final_summary(self) -> None:
         """打印最终统计摘要"""

@@ -389,7 +389,7 @@ class LocalizerZH():
     basic_settings_page_request_timeout_content: str = (
         "非流式请求等待模型回复的最长时间（秒），0 = 禁用（无超时）"
         "<br>"
-        "流式请求不使用该超时；流式中断由“流式无数据超时”控制"
+        "流式请求不使用该超时；流式“首块等待”由“流式首块等待超时”控制，流式中断由“流式无数据超时”控制"
         ""
         ""
     )
@@ -458,6 +458,12 @@ class LocalizerZH():
         "<br>"
         "达到阈值会触发异常并进入重试流程"
     )
+    expert_settings_page_stream_first_chunk_timeout_seconds_title: str = "流式首块等待超时（秒）"
+    expert_settings_page_stream_first_chunk_timeout_seconds_desc: str = (
+        "流式请求已发出但尚未收到任何 chunk 时，最多等待多久判定为异常"
+        "<br>"
+        "达到阈值会触发异常并进入重试流程；0 = 禁用（无限等待）"
+    )
     expert_settings_page_stream_retry_attempts_title: str = "流式重试次数"
     expert_settings_page_stream_retry_attempts_desc: str = (
         "流式传输异常时的最大重试次数（包含首次尝试）"
@@ -466,6 +472,44 @@ class LocalizerZH():
     expert_settings_page_stream_retry_backoff_seconds_desc: str = (
         "流式重试之间的等待时间基数，实际等待为 基数×(第n次)；0 = 立即重试"
     )
+    expert_settings_page_preceding_only_first_round_title: str = "参考上文仅第一轮启用"
+    expert_settings_page_preceding_only_first_round_desc: str = (
+        "启用后，仅第 1 轮翻译任务会携带参考上文；后续轮次不携带"
+        "<br>"
+        "关闭后，所有轮次与滚动重试拆分任务都会携带参考上文（推荐需要高一致性的项目）"
+    )
+    expert_settings_page_rolling_split_retry_enable_title: str = "失败时滚动对半拆分重试"
+    expert_settings_page_rolling_split_retry_enable_desc: str = (
+        "任意翻译失败（超时、断流、行数不一致、数据结构错误等）时，自动保持连续性对半拆分并立即重试"
+        "<br>"
+        "可提升并发利用率并降低等待下一轮次的空转"
+    )
+    expert_settings_page_rolling_split_max_depth_title: str = "滚动拆分最大深度"
+    expert_settings_page_rolling_split_max_depth_desc: str = (
+        "对半拆分的最大递归深度，深度越大允许拆得越细"
+    )
+    expert_settings_page_rolling_split_min_input_token_threshold_title: str = "滚动拆分最小输入阈值"
+    expert_settings_page_rolling_split_min_input_token_threshold_desc: str = (
+        "当拆分后的任务输入阈值小于等于该值时不再继续对半拆分"
+        "<br>"
+        "0 = 不限制（仅受最大深度限制）"
+    )
+    expert_settings_page_rolling_split_halve_preceding_threshold_title: str = "滚动拆分同步对半参考上文"
+    expert_settings_page_rolling_split_halve_preceding_threshold_desc: str = (
+        "启用后，每次对半拆分会把参考上文阈值也同步对半（60→30→15…）"
+        "<br>"
+        "关闭后，拆分任务仍使用同一参考上文阈值"
+    )
+    expert_settings_page_rolling_split_right_preceding_mode_title: str = "右半段参考上文策略"
+    expert_settings_page_rolling_split_right_preceding_mode_desc: str = (
+        "当任务对半拆分时，右半段的参考上文如何构造"
+        "<br>"
+        "• 连续尾部上下文：取【原参考上文尾部 + 左半段正文尾部】的最后 N 条，右半段能看到紧挨着它之前发生了什么"
+        "<br>"
+        "• 左半段开头：取左半段正文的前 N 条作为参考（更像“风格/设定提示”，但连续性弱）"
+    )
+    expert_settings_page_rolling_split_right_preceding_mode_item_tail_context: str = "连续尾部上下文（原上文尾部 + 左半段尾部，推荐）"
+    expert_settings_page_rolling_split_right_preceding_mode_item_left_head: str = "左半段开头 N 条（风格提示）"
 
     # 质量类通用
     quality_import: str = "导入"

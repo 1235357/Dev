@@ -8,6 +8,7 @@ from qfluentwidgets import SingleDirectionScrollArea
 from base.Base import Base
 from module.Config import Config
 from module.Localizer.Localizer import Localizer
+from widget.ComboBoxCard import ComboBoxCard
 from widget.SpinCard import SpinCard
 from widget.SwitchButtonCard import SwitchButtonCard
 
@@ -49,8 +50,15 @@ class ExpertSettingsPage(QWidget, Base):
         self.add_widget_result_checker_retry_count_threshold(scroll_area_vbox, config, window)
         self.add_widget_request_max_retries(scroll_area_vbox, config, window)
         self.add_widget_stream_stall_timeout_seconds(scroll_area_vbox, config, window)
+        self.add_widget_stream_first_chunk_timeout_seconds(scroll_area_vbox, config, window)
         self.add_widget_stream_retry_attempts(scroll_area_vbox, config, window)
         self.add_widget_stream_retry_backoff_seconds(scroll_area_vbox, config, window)
+        self.add_widget_preceding_only_first_round(scroll_area_vbox, config, window)
+        self.add_widget_rolling_split_retry_enable(scroll_area_vbox, config, window)
+        self.add_widget_rolling_split_max_depth(scroll_area_vbox, config, window)
+        self.add_widget_rolling_split_min_input_token_threshold(scroll_area_vbox, config, window)
+        self.add_widget_rolling_split_halve_preceding_threshold(scroll_area_vbox, config, window)
+        self.add_widget_rolling_split_right_preceding_mode(scroll_area_vbox, config, window)
 
         # 填充
         scroll_area_vbox.addStretch(1)
@@ -270,6 +278,26 @@ class ExpertSettingsPage(QWidget, Base):
             )
         )
 
+    def add_widget_stream_first_chunk_timeout_seconds(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(0, 9999999)
+            widget.get_spin_box().setValue(config.stream_first_chunk_timeout_seconds)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.stream_first_chunk_timeout_seconds = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_stream_first_chunk_timeout_seconds_title,
+                description = Localizer.get().expert_settings_page_stream_first_chunk_timeout_seconds_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
     def add_widget_stream_retry_attempts(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
 
         def init(widget: SpinCard) -> None:
@@ -307,5 +335,137 @@ class ExpertSettingsPage(QWidget, Base):
                 description = Localizer.get().expert_settings_page_stream_retry_backoff_seconds_desc,
                 init = init,
                 value_changed = value_changed,
+            )
+        )
+
+    def add_widget_preceding_only_first_round(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SwitchButtonCard) -> None:
+            widget.get_switch_button().setChecked(
+                config.preceding_only_first_round
+            )
+
+        def checked_changed(widget: SwitchButtonCard) -> None:
+            config = Config().load()
+            config.preceding_only_first_round = widget.get_switch_button().isChecked()
+            config.save()
+
+        parent.addWidget(
+            SwitchButtonCard(
+                title = Localizer.get().expert_settings_page_preceding_only_first_round_title,
+                description = Localizer.get().expert_settings_page_preceding_only_first_round_desc,
+                init = init,
+                checked_changed = checked_changed,
+            )
+        )
+
+    def add_widget_rolling_split_retry_enable(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SwitchButtonCard) -> None:
+            widget.get_switch_button().setChecked(
+                config.rolling_split_retry_enable
+            )
+
+        def checked_changed(widget: SwitchButtonCard) -> None:
+            config = Config().load()
+            config.rolling_split_retry_enable = widget.get_switch_button().isChecked()
+            config.save()
+
+        parent.addWidget(
+            SwitchButtonCard(
+                title = Localizer.get().expert_settings_page_rolling_split_retry_enable_title,
+                description = Localizer.get().expert_settings_page_rolling_split_retry_enable_desc,
+                init = init,
+                checked_changed = checked_changed,
+            )
+        )
+
+    def add_widget_rolling_split_max_depth(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(1, 9999999)
+            widget.get_spin_box().setValue(config.rolling_split_max_depth)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.rolling_split_max_depth = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_rolling_split_max_depth_title,
+                description = Localizer.get().expert_settings_page_rolling_split_max_depth_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
+    def add_widget_rolling_split_min_input_token_threshold(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(0, 9999999)
+            widget.get_spin_box().setValue(config.rolling_split_min_input_token_threshold)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.rolling_split_min_input_token_threshold = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_rolling_split_min_input_token_threshold_title,
+                description = Localizer.get().expert_settings_page_rolling_split_min_input_token_threshold_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
+    def add_widget_rolling_split_halve_preceding_threshold(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SwitchButtonCard) -> None:
+            widget.get_switch_button().setChecked(
+                config.rolling_split_halve_preceding_threshold
+            )
+
+        def checked_changed(widget: SwitchButtonCard) -> None:
+            config = Config().load()
+            config.rolling_split_halve_preceding_threshold = widget.get_switch_button().isChecked()
+            config.save()
+
+        parent.addWidget(
+            SwitchButtonCard(
+                title = Localizer.get().expert_settings_page_rolling_split_halve_preceding_threshold_title,
+                description = Localizer.get().expert_settings_page_rolling_split_halve_preceding_threshold_desc,
+                init = init,
+                checked_changed = checked_changed,
+            )
+        )
+
+    def add_widget_rolling_split_right_preceding_mode(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        items = [
+            Localizer.get().expert_settings_page_rolling_split_right_preceding_mode_item_tail_context,
+            Localizer.get().expert_settings_page_rolling_split_right_preceding_mode_item_left_head,
+        ]
+
+        def init(widget: ComboBoxCard) -> None:
+            mode = str(config.rolling_split_right_preceding_mode or "").strip()
+            idx = 1 if mode == "left_head" else 0
+            widget.get_combo_box().setCurrentIndex(idx)
+
+        def current_changed(widget: ComboBoxCard) -> None:
+            idx = widget.get_combo_box().currentIndex()
+            mode = "left_head" if idx == 1 else "tail_context"
+            config = Config().load()
+            config.rolling_split_right_preceding_mode = mode
+            config.save()
+
+        parent.addWidget(
+            ComboBoxCard(
+                title = Localizer.get().expert_settings_page_rolling_split_right_preceding_mode_title,
+                description = Localizer.get().expert_settings_page_rolling_split_right_preceding_mode_desc,
+                items = items,
+                init = init,
+                current_changed = current_changed,
             )
         )

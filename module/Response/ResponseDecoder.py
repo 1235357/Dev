@@ -297,11 +297,20 @@ class ResponseDecoder(Base):
             indexed[idx] = value
             hits += 1
 
-        if hits < 5 or 0 not in indexed:
+        if hits < 3:
+            return {}
+
+        if 0 not in indexed and 1 not in indexed:
             return {}
 
         max_idx = max(indexed.keys())
+        min_idx = min(indexed.keys())
         if max_idx > 20000:
+            return {}
+
+        # 防止误识别：如果编号过于稀疏（大量跳号），视为无效
+        span = max_idx - min_idx + 1
+        if span > hits + 2:
             return {}
 
         return indexed

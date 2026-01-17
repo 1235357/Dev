@@ -3,7 +3,7 @@ from typing import Self
 
 from base.Base import Base
 
-class Engine():
+class Engine(Base):
 
     # 兼容旧代码：Status 别名指向 Base.TaskStatus
     Status = Base.TaskStatus
@@ -40,6 +40,10 @@ class Engine():
     def set_status(self, status: Base.TaskStatus) -> None:
         with self.lock:
             self.status = status
+
+    def translate_single_item(self, item, config, callback) -> None:
+        if hasattr(self, "translator"):
+            self.translator.translate_single_item(item, config, callback)
 
     def get_running_task_count(self) -> int:
         return sum(1 for t in threading.enumerate() if t.name.startswith(__class__.TASK_PREFIX))

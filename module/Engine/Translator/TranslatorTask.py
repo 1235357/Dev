@@ -14,6 +14,7 @@ from module.Cache.CacheItem import CacheItem
 from module.Config import Config
 from module.Engine.Engine import Engine
 from module.Engine.TaskRequester import TaskRequester
+from module.ErrorLogger import ErrorLogger
 from module.Localizer.Localizer import Localizer
 from module.PromptBuilder import PromptBuilder
 from module.Response.ResponseChecker import ResponseChecker
@@ -43,11 +44,11 @@ class TranslatorTask(Base):
         self.response_checker = ResponseChecker(self.config, items, platform)
 
     # 启动任务
-    def start(self, current_round: int) -> dict[str, str]:
-        return self.request(self.items, self.processors, self.precedings, self.local_flag, current_round)
+    def start(self, current_round: int, task_id: str = None) -> dict[str, str]:
+        return self.request(self.items, self.processors, self.precedings, self.local_flag, current_round, task_id)
 
     # 请求
-    def request(self, items: list[CacheItem], processors: list[TextProcessor], precedings: list[CacheItem], local_flag: bool, current_round: int) -> dict[str, str]:
+    def request(self, items: list[CacheItem], processors: list[TextProcessor], precedings: list[CacheItem], local_flag: bool, current_round: int, task_id: str = None) -> dict[str, str]:
         # 任务开始的时间
         start_time = time.time()
 
@@ -82,7 +83,7 @@ class TranslatorTask(Base):
 
         # 发起请求
         requester = TaskRequester(self.config, self.platform, current_round)
-        skip, response_think, response_result, input_tokens, output_tokens = requester.request(self.messages)
+        skip, response_think, response_result, input_tokens, output_tokens = requester.request(self.messages, task_id=task_id)
 
         # 如果请求结果标记为 skip，即有错误发生，则跳过本次循环
         if skip == True:
@@ -127,6 +128,7 @@ class TranslatorTask(Base):
 
         # 如果有任何正确的条目，则处理结果
         updated_count = 0
+        zh_chars = 0
         if any(v == ResponseChecker.Error.NONE for v in checks):
             # 更新术语表
             with __class__.GLOSSARY_SAVE_LOCK:
@@ -150,6 +152,27 @@ class TranslatorTask(Base):
                     item.set_first_name_dst(name) if name is not None else None
                     item.set_status(Base.TranslationStatus.PROCESSED)
                     updated_count = updated_count + 1
+                    zh_chars = zh_chars + sum(1 for c in dst if TextHelper.CJK.char(c))
+
+        if updated_count == 0 and any(v != ResponseChecker.Error.NONE for v in checks):
+            fail_reasons = sorted({__class__.get_error_text(v) for v in checks if v != ResponseChecker.Error.NONE})
+            ErrorLogger.log(
+                error_type="TranslationValidationFail",
+                message=f"Errors detected: {', '.join([str(v) for v in sorted(set(checks)) if v != ResponseChecker.Error.NONE])}",
+                context={
+                    "task_id": task_id or "",
+                    "file_path": items[0].get_file_path() if items else "",
+                    "error_types": [str(v) for v in checks if v != ResponseChecker.Error.NONE],
+                    "src_lines": len(srcs),
+                    "dst_lines": len(dsts),
+                    "messages": self.messages,
+                    "response_think": response_think or "",
+                    "response_result": response_result or "",
+                    "parsed_dsts": dsts,
+                    "checks": [str(v) for v in checks],
+                    "fail_reason_localized": "、".join(fail_reasons) if fail_reasons else "",
+                },
+            )
 
         # 打印任务结果
         self.print_log_table(
@@ -172,6 +195,7 @@ class TranslatorTask(Base):
                 "row_count": updated_count,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "zh_chars": zh_chars,
                 "warning": has_warning,
                 "failed": False,
             }
@@ -182,10 +206,60 @@ class TranslatorTask(Base):
                 __class__.get_error_text(v) for v in checks
                 if v != ResponseChecker.Error.NONE
             )
+            should_split_retry = (
+                len(items) >= 2 and
+                all(v in (ResponseChecker.Error.FAIL_DATA, ResponseChecker.Error.FAIL_LINE_COUNT) for v in checks)
+            )
+            if should_split_retry:
+                mid = len(items) // 2
+                left_items = items[:mid]
+                right_items = items[mid:]
+
+                if left_items and right_items:
+                    left_task = TranslatorTask(self.config, self.platform, local_flag, left_items, precedings)
+                    right_task = TranslatorTask(self.config, self.platform, local_flag, right_items, precedings)
+
+                    left_result = left_task.start(current_round, task_id=task_id)
+                    right_result = right_task.start(current_round, task_id=task_id)
+
+                    combined_row_count = int(left_result.get("row_count", 0) or 0) + int(right_result.get("row_count", 0) or 0)
+                    combined_input_tokens = int(left_result.get("input_tokens", 0) or 0) + int(right_result.get("input_tokens", 0) or 0)
+                    combined_output_tokens = int(right_result.get("output_tokens", 0) or 0) + int(left_result.get("output_tokens", 0) or 0)
+                    combined_zh_chars = int(left_result.get("zh_chars", 0) or 0) + int(right_result.get("zh_chars", 0) or 0)
+                    combined_warning = bool(left_result.get("warning", False) or right_result.get("warning", False) or combined_row_count > 0)
+                    combined_failed = bool(left_result.get("failed", False) and right_result.get("failed", False) and combined_row_count == 0)
+
+                    combined_fail_reason_parts = []
+                    if left_result.get("failed", False):
+                        combined_fail_reason_parts.append(str(left_result.get("fail_reason", "") or "").strip())
+                    if right_result.get("failed", False):
+                        combined_fail_reason_parts.append(str(right_result.get("fail_reason", "") or "").strip())
+                    combined_fail_reason_parts = [x for x in combined_fail_reason_parts if x]
+
+                    if combined_row_count > 0:
+                        return {
+                            "row_count": combined_row_count,
+                            "input_tokens": input_tokens + combined_input_tokens,
+                            "output_tokens": output_tokens + combined_output_tokens,
+                            "zh_chars": combined_zh_chars,
+                            "warning": True,
+                            "failed": False,
+                        }
+                    return {
+                        "row_count": 0,
+                        "input_tokens": input_tokens + combined_input_tokens,
+                        "output_tokens": output_tokens + combined_output_tokens,
+                        "zh_chars": 0,
+                        "warning": False,
+                        "failed": combined_failed,
+                        "fail_reason": "、".join([x for x in combined_fail_reason_parts if x]) or "未知错误",
+                    }
+
             return {
                 "row_count": 0,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "zh_chars": 0,
                 "warning": False,
                 "failed": True,
                 "fail_reason": "、".join(fail_reasons) if fail_reasons else "未知错误",

@@ -250,7 +250,13 @@ class TaskTracker:
         
         # 1. 活跃任务部分（简化显示）
         line_info.append("📊 ", style="bold")
-        line_info.append(f"{active_count}", style="bold cyan")
+        
+        # 显示逻辑修正：活跃数不应超过最大并发数（除非是无限模式）
+        display_active = active_count
+        if self.max_concurrent < __class__.UNLIMITED_WORKERS_THRESHOLD:
+            display_active = min(active_count, self.max_concurrent)
+            
+        line_info.append(f"{display_active}", style="bold cyan")
         
         # 显示并发限制（当不是无限模式时）
         if self.max_concurrent < __class__.UNLIMITED_WORKERS_THRESHOLD:
@@ -319,18 +325,15 @@ class TaskTracker:
             line_info.append(" │ ", style="dim")
             line_info.append(f"块:{total_chunks}", style="dim")
         
-        # 组合：只有两部分 [进度条, 统计行]
-        items = [self._progress, line_info]
-        
-        # 如果有失败原因，简要显示在第三行
+        # 如果有失败原因，合并显示在同一行
         if self._failed_reasons:
-            line_err = Text("❌ ", style="bold red")
+            line_info.append(" │ ", style="dim")
+            line_info.append("❌ ", style="bold red")
             reasons = sorted(self._failed_reasons.items(), key=lambda x: -x[1])[:2]  # 只显示 top 2
             for r, c in reasons:
-                line_err.append(f"{r}({c}) ", style="red")
-            items.append(line_err)
+                line_info.append(f"{r}({c}) ", style="red")
             
-        return Group(*items)
+        return Group(self._progress, line_info)
     
     def _format_number(self, n: int) -> str:
         """格式化数字（k/M）"""

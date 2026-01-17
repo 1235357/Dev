@@ -28,6 +28,9 @@ class Base():
         APP_UPDATE_EXTRACT = "APP_UPDATE_EXTRACT"                           # 更新 - 解压
         CACHE_SAVE = "CACHE_SAVE"                                           # 保存缓存
         GLOSSARY_REFRESH = "GLOSSARY_REFRESH"                               # 术语表刷新
+        PROGRESS_TOAST_SHOW = "PROGRESS_TOAST_SHOW"                         # 进度通知 - 显示
+        PROGRESS_TOAST_UPDATE = "PROGRESS_TOAST_UPDATE"                     # 进度通知 - 更新
+        PROGRESS_TOAST_HIDE = "PROGRESS_TOAST_HIDE"                         # 进度通知 - 隐藏
 
     # 接口格式
     class APIFormat(StrEnum):

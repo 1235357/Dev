@@ -167,9 +167,9 @@ class CacheManager(Base):
         return len([item for item in self.items if item.get_status() == status])
 
     # 生成缓存数据条目片段
-    def generate_item_chunks(self, token_threshold: int, preceding_lines_threshold: int) -> list[list[CacheItem]]:
+    def generate_item_chunks(self, input_token_threshold: int, preceding_lines_threshold: int) -> list[list[CacheItem]]:
         # 根据 Token 阈值计算行数阈值，避免大量短句导致行数太多
-        line_limit = max(8, int(token_threshold / 16))
+        line_limit = max(8, int(input_token_threshold / 16))
 
         skip: int = 0
         line_length: int = 0
@@ -191,7 +191,7 @@ class CacheManager(Base):
             # 如果 行数超限、Token 超限、数据来源跨文件，则结束此片段
             elif (
                 line_length + current_line_length > line_limit
-                or token_length + current_token_length > token_threshold
+                or token_length + current_token_length > input_token_threshold
                 or item.get_file_path() != chunk[-1].get_file_path()
             ):
                 chunks.append(chunk)

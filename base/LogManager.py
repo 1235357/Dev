@@ -93,6 +93,7 @@ class LogManager():
 
         # 控制台日志实例
         self.console_handler = RichHandler(
+            console = self.console,
             markup = True,
             show_path = False,
             rich_tracebacks = False,

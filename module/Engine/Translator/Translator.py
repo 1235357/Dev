@@ -1,4 +1,5 @@
 import concurrent.futures
+import json
 import os
 import re
 import shutil
@@ -27,6 +28,7 @@ from module.PromptBuilder import PromptBuilder
 from module.ResultChecker import ResultChecker
 from module.StreamingStats import StreamingStats
 from module.TaskTracker import TaskTracker, set_current_tracker, get_current_tracker
+from module.Text.TextHelper import TextHelper
 from module.TextProcessor import TextProcessor
 
 # 翻译器
@@ -49,6 +51,9 @@ class Translator(Base):
 
     # 翻译停止事件
     def translation_stop(self, event: str, data: dict) -> None:
+        if Engine.get().get_status() != Base.TaskStatus.TRANSLATING:
+            return None
+
         # 更新运行状态
         Engine.get().set_status(Base.TaskStatus.STOPPING)
 
@@ -113,15 +118,45 @@ class Translator(Base):
     def translation_project_status_check(self, event: str, data: dict) -> None:
 
         def task(event: str, data: dict) -> None:
+            extras: dict = {}
             if Engine.get().get_status() != Base.TaskStatus.IDLE:
                 status = Base.TranslationStatus.NONE
             else:
-                cache_manager = CacheManager(service = False)
-                cache_manager.load_project_from_file(Config().load().output_folder)
-                status = cache_manager.get_project().get_status()
+                try:
+                    cache_manager = CacheManager(service = False)
+                    output_folder = Config().load().output_folder
+                    cache_manager.load_project_from_file(output_folder)
+                    status = cache_manager.get_project().get_status()
+                    extras = cache_manager.get_project().get_extras() or {}
+                    extras.setdefault("total_zh_chars", 0)
+                    if (
+                        extras.get("total_zh_chars", 0) == 0
+                        and status in (Base.TranslationStatus.PROCESSING, Base.TranslationStatus.PROCESSED)
+                        and os.path.isfile(f"{output_folder}/cache/items.json")
+                    ):
+                        cache_manager.load_items_from_file(output_folder)
+                        items = cache_manager.get_items()
+                        total_zh_chars = 0
+                        for item in items:
+                            if item.get_status() == Base.TranslationStatus.NONE:
+                                continue
+                            dst = item.get_dst() or ""
+                            if dst:
+                                total_zh_chars = total_zh_chars + sum(1 for c in dst if TextHelper.CJK.char(c))
+                        extras["total_zh_chars"] = total_zh_chars
+                        cache_manager.get_project().set_extras(extras)
+                        os.makedirs(f"{output_folder}/cache", exist_ok=True)
+                        project_path = f"{output_folder}/cache/project.json"
+                        with CacheManager.LOCK:
+                            with open(project_path, "w", encoding="utf-8") as writer:
+                                writer.write(json.dumps(cache_manager.get_project().asdict(), indent=None, ensure_ascii=False))
+                except Exception:
+                    status = Base.TranslationStatus.NONE
+                    extras = {}
 
             self.emit(Base.Event.PROJECT_CHECK_DONE, {
                 "status" : status,
+                "extras": extras,
             })
         threading.Thread(target = task, args = (event, data)).start()
 
@@ -173,13 +208,16 @@ class Translator(Base):
         if status == Base.TranslationStatus.PROCESSING:
             self.extras = self.cache_manager.get_project().get_extras()
             self.extras["start_time"] = time.time() - self.extras.get("time", 0)
+            self.extras.setdefault("total_zh_chars", 0)
         else:
             self.extras = {
                 "start_time": time.time(),
                 "total_line": 0,
                 "line": 0,
                 "total_tokens": 0,
+                "total_input_tokens": 0,
                 "total_output_tokens": 0,
+                "total_zh_chars": 0,
                 "time": 0,
             }
 
@@ -208,11 +246,11 @@ class Translator(Base):
 
             # 第二轮开始切分
             if current_round > 0:
-                self.config.token_threshold = max(1, int(self.config.token_threshold / 3))
+                self.config.input_token_threshold = max(1, int(self.config.input_token_threshold / 3))
 
             # 生成缓存数据条目片段
             chunks, precedings = self.cache_manager.generate_item_chunks(
-                self.config.token_threshold,
+                self.config.input_token_threshold,
                 self.config.preceding_lines_threshold,
             )
 
@@ -263,6 +301,9 @@ class Translator(Base):
             tracker.retry_round = current_round  # 同步当前轮次
             set_current_tracker(tracker)
             
+            # 使用信号量严格控制并发提交，确保 Tracker 显示的活跃数与实际运行线程数一致
+            semaphore = threading.BoundedSemaphore(max_workers)
+
             with tracker:
                 with concurrent.futures.ThreadPoolExecutor(max_workers = max_workers, thread_name_prefix = Engine.TASK_PREFIX) as executor:
                     for i, task in enumerate(tasks):
@@ -272,15 +313,24 @@ class Translator(Base):
                             set_current_tracker(None)
                             return None
 
+                        # 获取信号量（带超时以响应停止信号）
+                        while not semaphore.acquire(timeout=0.1):
+                            if Engine.get().get_status() == Base.TaskStatus.STOPPING:
+                                set_current_tracker(None)
+                                return None
+
                         task_limiter.wait()
                         
                         # 开始任务追踪
                         task_id = f"task_{i}"
                         tracker.start_task(task_id, description=f"任务 {i+1}")
                         
-                        future = executor.submit(task.start, current_round)
-                        # 将 task_id 绑定到回调中
+                        future = executor.submit(task.start, current_round, task_id)
+                        # 任务完成时释放信号量
+                        # 【重要】必须先执行 tracker 更新回调，再释放信号量
+                        # 否则可能出现旧任务未从 tracker 清除，新任务就已添加，导致 tracker 显示的活跃数超过上限
                         future.add_done_callback(lambda f, tid=task_id: self.task_done_callback_with_tracker(f, tid, tracker))
+                        future.add_done_callback(lambda f: semaphore.release())
             
             # 结束本轮任务追踪
             set_current_tracker(None)
@@ -350,6 +400,37 @@ class Translator(Base):
 
         # 触发翻译停止完成的事件
         self.emit(Base.Event.TRANSLATION_DONE, {})
+
+    # 翻译单条数据
+    def translate_single_item(self, item: CacheItem, config: Config, callback: callable) -> None:
+        def task():
+            try:
+                # 初始化配置
+                self.config = config
+                self.platform = self.config.get_platform(self.config.activate_platform)
+                local_flag = self.initialize_local_flag()
+
+                # 创建任务
+                translator_task = TranslatorTask(
+                    self.config,
+                    self.platform,
+                    local_flag,
+                    [item],
+                    [[]]
+                )
+
+                # 执行翻译，current_round = 0
+                result = translator_task.start(0)
+
+                # 回调
+                success = not result.get("failed", False)
+                callback(item, success)
+
+            except Exception as e:
+                self.error("Translate single item failed", e)
+                callback(item, False)
+
+        threading.Thread(target=task).start()
 
     # 初始化本地标识
     def initialize_local_flag(self) -> bool:
@@ -560,7 +641,9 @@ class Translator(Base):
                 new["total_line"] = self.extras.get("total_line", 0)
                 new["line"] = self.extras.get("line", 0) + result.get("row_count", 0)
                 new["total_tokens"] = self.extras.get("total_tokens", 0) + result.get("input_tokens", 0) + result.get("output_tokens", 0)
+                new["total_input_tokens"] = self.extras.get("total_input_tokens", 0) + result.get("input_tokens", 0)
                 new["total_output_tokens"] = self.extras.get("total_output_tokens", 0) + result.get("output_tokens", 0)
+                new["total_zh_chars"] = self.extras.get("total_zh_chars", 0) + result.get("zh_chars", 0)
                 new["time"] = time.time() - self.extras.get("start_time", 0)
                 self.extras = new
 
@@ -608,7 +691,9 @@ class Translator(Base):
                 new["total_line"] = self.extras.get("total_line", 0)
                 new["line"] = self.extras.get("line", 0) + result.get("row_count", 0)
                 new["total_tokens"] = self.extras.get("total_tokens", 0) + input_tokens + output_tokens
+                new["total_input_tokens"] = self.extras.get("total_input_tokens", 0) + input_tokens
                 new["total_output_tokens"] = self.extras.get("total_output_tokens", 0) + output_tokens
+                new["total_zh_chars"] = self.extras.get("total_zh_chars", 0) + result.get("zh_chars", 0)
                 new["time"] = time.time() - self.extras.get("start_time", 0)
                 self.extras = new
 

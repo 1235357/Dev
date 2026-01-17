@@ -1,25 +1,10 @@
 {
     "theme": "DARK",
     "app_language": "ZH",
-    "activate_platform": 7,
+    "activate_platform": 2,
     "platforms": [
         {
             "id": 0,
-            "name": "魔塔-DeepSeek-R1-0528",
-            "api_url": "https://api-inference.modelscope.cn/v1/",
-            "api_key": [
-
-            ],
-            "api_format": "OpenAI",
-            "model": "deepseek-ai/DeepSeek-R1-0528",
-            "thinking": true,
-            "top_p": 0.95,
-            "temperature": 0.95,
-            "presence_penalty": 0.0,
-            "frequency_penalty": 0.0
-        },
-        {
-            "id": 1,
             "name": "魔塔-DeepSeek-V3.2",
             "api_url": "https://api-inference.modelscope.cn/v1/",
             "api_key": [
@@ -34,67 +19,7 @@
             "frequency_penalty": 0.0
         },
         {
-            "id": 2,
-            "name": "魔塔-DeepSeek-V3.1",
-            "api_url": "https://api-inference.modelscope.cn/v1/",
-            "api_key": [
-
-            ],
-            "api_format": "OpenAI",
-            "model": "deepseek-ai/DeepSeek-V3.1",
-            "thinking": true,
-            "top_p": 0.95,
-            "temperature": 0.95,
-            "presence_penalty": 0.0,
-            "frequency_penalty": 0.0
-        },
-        {
-            "id": 3,
-            "name": "魔塔-DeepSeek-V3.2-Exp",
-            "api_url": "https://api-inference.modelscope.cn/v1/",
-            "api_key": [
-
-            ],
-            "api_format": "OpenAI",
-            "model": "deepseek-ai/DeepSeek-V3.2-Exp",
-            "thinking": true,
-            "top_p": 0.95,
-            "temperature": 0.95,
-            "presence_penalty": 0.0,
-            "frequency_penalty": 0.0
-        },
-        {
-            "id": 4,
-            "name": "魔塔-Qwen3-Next-80B-A3B-Instruct",
-            "api_url": "https://api-inference.modelscope.cn/v1/",
-            "api_key": [
-
-            ],
-            "api_format": "OpenAI",
-            "model": "Qwen/Qwen3-Next-80B-A3B-Instruct",
-            "thinking": true,
-            "top_p": 0.95,
-            "temperature": 0.95,
-            "presence_penalty": 0.0,
-            "frequency_penalty": 0.0
-        },
-        {
-            "id": 5,
-            "name": "魔塔-GLM-4.7",
-            "api_url": "https://api-inference.modelscope.cn/v1/",
-            "api_key": [
-
-            ],
-            "api_format": "OpenAI",
-            "model": "ZhipuAI/GLM-4.7",
-            "thinking": true,
-            "top_p": 0.95,
-            "temperature": 0.95,
-            "presence_penalty": 0.0,
-            "frequency_penalty": 0.0
-        },
-        {
-            "id": 6,
+            "id": 1,
             "name": "智谱-GLM-4.6V-Flash",
             "api_url": "https://open.bigmodel.cn/api/paas/v4",
             "api_key": [
@@ -109,7 +34,7 @@
             "frequency_penalty": 0.0
         },
         {
-            "id": 7,
+            "id": 2,
             "name": "NVIDIA-DeepSeek-V3.2",
             "api_url": "https://integrate.api.nvidia.com/v1",
             "api_key": [
@@ -129,18 +54,24 @@
     "proxy_enable": false,
     "font_hinting": true,
     "scale_factor": "",
-    "token_threshold": 4096,
-    "max_workers": 0,
+    "input_token_threshold": 4096,
+    "output_token_threshold": 65536,
+    "max_workers": 400,
     "rpm_threshold": 60,
     "request_timeout": 1200,
+    "request_max_retries": 1,
     "max_round": 7,
     "preceding_lines_threshold": 60,
     "enable_preceding_on_local": true,
     "clean_ruby": true,
-    "deduplication_in_trans": true,
+    "deduplication_in_trans": false,
     "deduplication_in_bilingual": true,
-    "write_translated_name_fields_to_file": true,
+    "write_translated_name_fields_to_file": false,
+    "auto_process_prefix_suffix_preserved_text": true,
     "result_checker_retry_count_threshold": false,
+    "stream_stall_timeout_seconds": 120,
+    "stream_retry_attempts": 3,
+    "stream_retry_backoff_seconds": 2,
     "source_language": "JA",
     "target_language": "ZH",
     "input_folder": "./input",
@@ -151,142 +82,2202 @@
     "glossary_enable": true,
     "glossary_data": [
         {
-            "src": "ハーレム",
-            "dst": "后宫",
+            "src": "ティナーシャ",
+            "dst": "缇娜夏",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ユズ",
-            "dst": "柚子",
+            "src": "青き月の魔女",
+            "dst": "苍月魔女",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "カズ",
-            "dst": "阿和",
+            "src": "ファルサス",
+            "dst": "法尔萨斯",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "モーカ",
-            "dst": "哞花",
+            "src": "オスカー",
+            "dst": "奥斯卡",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ヒメ",
-            "dst": "小姬",
+            "src": "アカーシア",
+            "dst": "阿卡西亚",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "コロ",
-            "dst": "小心",
+            "src": "ルクレツィア",
+            "dst": "露克芮札",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "テル",
-            "dst": "照",
+            "src": "ラヴィニア",
+            "dst": "菈碧妮亚",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ツキ",
-            "dst": "月",
+            "src": "レオノーラ",
+            "dst": "蕾欧诺菈",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "かずぴ",
-            "dst": "阿和",
+            "src": "ヴァルト",
+            "dst": "瓦尔托",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "かずぴょん",
-            "dst": "阿和",
+            "src": "レウティシア",
+            "dst": "蕾缇希亚",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ひだか",
-            "dst": "冰高",
+            "src": "リースヒェン",
+            "dst": "莉丝恩",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "氷高命",
-            "dst": "冰高命",
+            "src": "ディアドラ",
+            "dst": "德亚特菈",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "花鳥みやび",
-            "dst": "花鸟弥美",
+            "src": "沈黙の魔女",
+            "dst": "沉默魔女",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "テルチー",
-            "dst": "阿照",
+            "src": "トゥルダール",
+            "dst": "铎洱达尔",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ミコちゃん",
-            "dst": "小命",
+            "src": "ロザリア",
+            "dst": "萝莎莉雅",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "かずき",
-            "dst": "和树",
+            "src": "トラヴィス",
+            "dst": "特拉毕斯",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "プラム",
-            "dst": "普拉姆",
+            "src": "オーレリア",
+            "dst": "奥蕾莉雅",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "みやび",
-            "dst": "弥美",
+            "src": "ガンドナ",
+            "dst": "冈杜那",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "カズキ",
-            "dst": "和树",
+            "src": "ラザル",
+            "dst": "拉札尔",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "モー",
-            "dst": "莫",
+            "src": "アルス",
+            "dst": "亚尔斯",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ヨッシー",
-            "dst": "尤西",
+            "src": "メレディナ",
+            "dst": "美蕾蒂娜",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "ゆずき",
-            "dst": "柚希",
+            "src": "ドアン",
+            "dst": "杜安",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
         },
         {
-            "src": "レディ",
-            "dst": "普拉姆夫人",
+            "src": "フシルヴィア",
+            "dst": "希尔薇娅",
             "info": "",
-            "regex": false
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カーヴ",
+            "dst": "卡普",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "パミラ",
+            "dst": "帕米菈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レナート",
+            "dst": "雷纳特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "タァイーリ",
+            "dst": "塔伊利",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クスクル",
+            "dst": "库斯克尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヤルダ",
+            "dst": "亚尔达",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フネフェリィ",
+            "dst": "涅菲莉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サヴァス",
+            "dst": "萨巴斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラナク",
+            "dst": "拉纳克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レジス",
+            "dst": "雷吉斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カルステ",
+            "dst": "加尔斯缇",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミラリス",
+            "dst": "蜜菈莉丝",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ナーク",
+            "dst": "那克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "閉ざされた森の魔女",
+            "dst": "封闭之森魔女",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "バルダロス",
+            "dst": "巴尔达洛司",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルスト",
+            "dst": "鲁斯托",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "マグダルシア",
+            "dst": "玛葛达鲁西亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ドルーザ",
+            "dst": "杜尔札",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セザル",
+            "dst": "赛扎鲁",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イルシュト",
+            "dst": "伊尔修特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "タルヴィガ",
+            "dst": "塔尔毕盖",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "メンサン",
+            "dst": "门桑",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウナイ",
+            "dst": "乌奈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ジシス",
+            "dst": "基希斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "デリラ",
+            "dst": "黛莉菈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ゲート",
+            "dst": "盖特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ファイドラ",
+            "dst": "法杜菈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アイテア",
+            "dst": "艾迪亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エッタード",
+            "dst": "艾塔德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イリティルディア",
+            "dst": "伊利堤尔迪亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シミラ",
+            "dst": "希米喇",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エルテリア",
+            "dst": "艾尔特利亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サリスセス",
+            "dst": "萨利斯塞斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヘルギニス",
+            "dst": "赫尔基尼斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "呼ばれぬ魔女",
+            "dst": "未被邀请之魔女",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レギウス",
+            "dst": "雷基乌斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラジュ",
+            "dst": "拉裘",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ティナ",
+            "dst": "缇娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "モーラウ",
+            "dst": "莫拉乌",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミリィ",
+            "dst": "米莉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミラード",
+            "dst": "米拉德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エズル",
+            "dst": "埃兹尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "テリザ",
+            "dst": "特利沙",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "デファス",
+            "dst": "德法斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "バルシア",
+            "dst": "巴尔西亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ワカニ",
+            "dst": "瓦卡尼",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リアス",
+            "dst": "利亚斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カドス",
+            "dst": "卡多斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サネク",
+            "dst": "萨内克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リトラ",
+            "dst": "立特拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フィストリア",
+            "dst": "菲丝托莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "トリア",
+            "dst": "托莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウィル",
+            "dst": "威尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "メディアル",
+            "dst": "梅迪亚尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カサンドラ",
+            "dst": "卡珊德拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "コデール",
+            "dst": "柯狄尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "オルトヴィーン",
+            "dst": "奥尔特温",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アナ",
+            "dst": "安娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セノワ",
+            "dst": "塞诺瓦",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アンネリ",
+            "dst": "安涅利",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロズサーク",
+            "dst": "罗斯萨克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フィレウス",
+            "dst": "菲雷乌斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エルシー",
+            "dst": "艾露希",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディスラル",
+            "dst": "迪斯拉尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ケレスメンティア",
+            "dst": "克雷斯门提亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イクレム",
+            "dst": "伊克莱姆",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディータ",
+            "dst": "迪塔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アリスティド",
+            "dst": "亚里斯迪德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ナドラス",
+            "dst": "纳德拉斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アーベル",
+            "dst": "阿贝尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セーロン",
+            "dst": "塞隆",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リマ",
+            "dst": "利马",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ベレンキ",
+            "dst": "贝伦基",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "キスク",
+            "dst": "吉斯克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ジェド",
+            "dst": "杰德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エイリーデ",
+            "dst": "艾丽黛",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セイレネ",
+            "dst": "塞蕾妮",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クレステア",
+            "dst": "克蕾丝缇雅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルニアディ",
+            "dst": "卢尼亚迪",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ユリア",
+            "dst": "尤莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シャーヒル",
+            "dst": "沙希尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "オルティア",
+            "dst": "奥尔蒂雅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カソラ",
+            "dst": "卡索拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クルシア",
+            "dst": "克鲁西亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディテル神",
+            "dst": "狄特尔神",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エリク",
+            "dst": "埃里克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディテルダ",
+            "dst": "迪特尔达",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "トラスセス",
+            "dst": "特拉塞斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "コダリス",
+            "dst": "科达里斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アイティリス",
+            "dst": "艾迪里斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディスカルダ",
+            "dst": "迪斯卡尔达",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルース",
+            "dst": "鲁斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロツィ",
+            "dst": "罗茨",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ファラース",
+            "dst": "法拉斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リグ",
+            "dst": "利格",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ベモン＝ビィ",
+            "dst": "贝蒙比",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ノノラ",
+            "dst": "诺诺菈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ノイディア",
+            "dst": "诺伊迪亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セレディア",
+            "dst": "瑟蕾蒂雅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラノマ",
+            "dst": "拉诺玛",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シェライーデ",
+            "dst": "雪莱德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガリバリ",
+            "dst": "贾巴里",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミミ",
+            "dst": "米米",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リサイ",
+            "dst": "里塞",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウィリディス",
+            "dst": "威利迪斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルクサ",
+            "dst": "卢克沙",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カリファ",
+            "dst": "卡莉法",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アルタ・ディティアタ",
+            "dst": "艾尔塔・蒂提亚塔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ランバルド",
+            "dst": "兰巴多",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロタリア",
+            "dst": "罗妲莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "タウトス",
+            "dst": "塔乌托斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イルド",
+            "dst": "伊鲁多",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヴァーノン",
+            "dst": "瓦诺",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヤザン",
+            "dst": "亚赞",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エナ",
+            "dst": "爱娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エド",
+            "dst": "艾德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ネズ",
+            "dst": "内兹",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ゴファナ",
+            "dst": "戈法纳",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガルド",
+            "dst": "加尔德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヴェーゼ",
+            "dst": "维泽",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フィオナ",
+            "dst": "菲奥娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ペール",
+            "dst": "佩尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アレット",
+            "dst": "阿蕾特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ナフェア",
+            "dst": "娜菲亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エギューラ",
+            "dst": "艾齐卢亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セネージ",
+            "dst": "塞内吉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "マルク",
+            "dst": "马尔克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "オーリク",
+            "dst": "奥里克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エヴリーヌ",
+            "dst": "艾薇莉努",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ティヨン",
+            "dst": "提雍",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラダフィール",
+            "dst": "拉达菲尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミッド",
+            "dst": "米德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミシリエ",
+            "dst": "米西莉埃",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セージ",
+            "dst": "塞吉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "スヴィセト",
+            "dst": "斯威塞特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "スヴィセール",
+            "dst": "斯威塞尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "バルナベ",
+            "dst": "巴尔纳贝",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レイジルヴァ",
+            "dst": "莱吉尔瓦",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アルファス",
+            "dst": "阿尔法斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラディク",
+            "dst": "拉迪克",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ツィリー",
+            "dst": "齐莉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アレイン",
+            "dst": "阿雷因",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ケストナー",
+            "dst": "凯斯特纳",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カーティス",
+            "dst": "卡提斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カリシュランダ",
+            "dst": "卡莉休兰妲",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヒルディア",
+            "dst": "希露蒂亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ハーヴェ",
+            "dst": "哈维",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カディル",
+            "dst": "卡迪尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ワルド",
+            "dst": "瓦尔德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シルファ",
+            "dst": "希露法",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウーゴ",
+            "dst": "乌戈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "オーティス",
+            "dst": "奥提斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エルシリア",
+            "dst": "艾露希莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アーティ",
+            "dst": "亚蒂",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ハジェズ",
+            "dst": "哈杰兹",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラーサエラ",
+            "dst": "拉萨耶拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イオロ",
+            "dst": "伊欧洛",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガテリア・ティティ",
+            "dst": "嘉泰利亚提帝",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フェペリア",
+            "dst": "法佩莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サネド・フォス",
+            "dst": "萨内德・福斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "マカイド",
+            "dst": "马凯德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アエテルナ",
+            "dst": "亚埃特鲁纳",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウィフィ",
+            "dst": "薇菲",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リセス",
+            "dst": "利塞斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガテリア",
+            "dst": "加提亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ティティ",
+            "dst": "蒂蒂",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミネダート",
+            "dst": "米内达特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イヌレード",
+            "dst": "伊努雷德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アスドラ",
+            "dst": "亚斯德拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ニスレ",
+            "dst": "尼斯特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カドエデラ",
+            "dst": "卡多埃德拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ダルベルド",
+            "dst": "达尔贝尔多",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シルヴィガンド",
+            "dst": "西尔薇加德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フォス",
+            "dst": "福斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヤバト",
+            "dst": "亚巴特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "コラス",
+            "dst": "科拉斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シルヴィア",
+            "dst": "西尔维娅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ミラ",
+            "dst": "米尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ネフェリィ",
+            "dst": "奈菲尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クム",
+            "dst": "库姆",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "トリス",
+            "dst": "翠丝",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クラーラ",
+            "dst": "克拉拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラッド",
+            "dst": "拉德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セン",
+            "dst": "森",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ハヴィ",
+            "dst": "哈维",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エルゼ",
+            "dst": "艾尔泽",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リタ",
+            "dst": "丽塔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シモン",
+            "dst": "西蒙",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "スズト",
+            "dst": "斯兹托",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アイティ",
+            "dst": "艾缇",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ネオナ",
+            "dst": "内奥娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サイエ",
+            "dst": "赛艾",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルーカノス",
+            "dst": "鲁卡诺斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "テミス",
+            "dst": "忒弥斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウーベルト",
+            "dst": "乌贝尔特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ケヴィン",
+            "dst": "凯文",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ゼフィリア",
+            "dst": "塞菲莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カレル",
+            "dst": "卡莱尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ノーマン",
+            "dst": "诺曼",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カガル",
+            "dst": "卡卡尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "グランフォート",
+            "dst": "格兰福特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ジェマ",
+            "dst": "杰玛",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガジェン",
+            "dst": "加杰恩",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヤルノ",
+            "dst": "亚尔诺",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "リリア",
+            "dst": "莉莉娅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルチア",
+            "dst": "露西亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イオセフ",
+            "dst": "伊奥塞夫",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エイル",
+            "dst": "艾爾",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "セネト",
+            "dst": "塞内特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "チェチーリア",
+            "dst": "切奇莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アデライーヤ",
+            "dst": "阿德莱伊娅",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "パスヴァール",
+            "dst": "帕斯瓦尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "メイヤー",
+            "dst": "梅尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ウル",
+            "dst": "乌鲁",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "モルカド",
+            "dst": "莫尔卡多",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エレーゼ",
+            "dst": "埃雷泽",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フューラ",
+            "dst": "弗拉拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラーサ",
+            "dst": "拉莎",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロムカ",
+            "dst": "罗姆卡",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "トイユ",
+            "dst": "托伊尤",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レグ",
+            "dst": "雷格",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "グウィード",
+            "dst": "格威德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クラリス",
+            "dst": "克拉里斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ニシル",
+            "dst": "尼西尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "マリア",
+            "dst": "玛丽亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イニゴ",
+            "dst": "伊尼戈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "インクレアートゥス",
+            "dst": "恩克雷阿图斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クロイツァー",
+            "dst": "克罗伊策",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カルラ",
+            "dst": "卡尔拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ガスク",
+            "dst": "格斯库",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ニル",
+            "dst": "尼尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エイリアド",
+            "dst": "艾利亚德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ホアキン",
+            "dst": "霍亚金",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラディア",
+            "dst": "拉迪亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "タルヴォ",
+            "dst": "塔尔沃",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サイハ",
+            "dst": "西哈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルリ",
+            "dst": "铃莉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ブロギア",
+            "dst": "布罗吉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ケグス",
+            "dst": "凯格斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ナハサ",
+            "dst": "娜哈萨",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "タウマ",
+            "dst": "塔乌玛",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラエス",
+            "dst": "拉埃斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ニノ",
+            "dst": "尼诺",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "古 宮",
+            "dst": "古宫",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ルイス",
+            "dst": "路易斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エルー",
+            "dst": "艾露",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "テネステーゼ",
+            "dst": "特内斯特泽",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アシヒス",
+            "dst": "阿西希斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ファヨラ",
+            "dst": "法约拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クナイ",
+            "dst": "クナイ",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "テレサ",
+            "dst": "特蕾莎",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ココ",
+            "dst": "科科",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フォデュテ",
+            "dst": "福蒂特",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディルシュ",
+            "dst": "迪尔施",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "フォルシア",
+            "dst": "福尔西亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "エニアス",
+            "dst": "埃尼亚斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヴァンレ",
+            "dst": "范雷",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アレッタ",
+            "dst": "阿蕾塔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ナイシャ",
+            "dst": "奈夏",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カリシュ",
+            "dst": "卡利什",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "デリア",
+            "dst": "德莉亚",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラルス",
+            "dst": "拉尔斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "バリエ",
+            "dst": "巴利埃",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "レギナ",
+            "dst": "蕾吉娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ダーナ",
+            "dst": "达娜",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カナウ",
+            "dst": "卡娜乌",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "クロワ",
+            "dst": "克罗瓦",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アラ",
+            "dst": "阿拉",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ビィ",
+            "dst": "比伊",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ベモン",
+            "dst": "贝蒙",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "サネド",
+            "dst": "萨内多",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ローステン",
+            "dst": "罗丝特恩",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カトリス",
+            "dst": "卡崔斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ディノケディルム",
+            "dst": "迪诺凯迪尔姆",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラサヌム",
+            "dst": "拉萨努姆",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラトチェ",
+            "dst": "拉托彻",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "シェルハ",
+            "dst": "谢尔哈",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラス",
+            "dst": "拉斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "カル",
+            "dst": "卡尔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ラン",
+            "dst": "兰",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "アルタ",
+            "dst": "阿尔塔",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "イツ",
+            "dst": "伊兹",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロブロス",
+            "dst": "罗布鲁斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロジオン",
+            "dst": "罗吉昂",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ターヴィティ",
+            "dst": "塔维蒂",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ネサン",
+            "dst": "内森",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ネルチ",
+            "dst": "尼尔奇",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ザウス",
+            "dst": "扎乌斯",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ロド",
+            "dst": "罗德",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヴォルグ",
+            "dst": "沃尔格",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
+        },
+        {
+            "src": "ヴァリ",
+            "dst": "瓦利",
+            "info": "",
+            "regex": false,
+            "case_sensitive": false
         }
     ],
     "text_preserve_enable": false,

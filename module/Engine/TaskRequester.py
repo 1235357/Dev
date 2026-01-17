@@ -14,6 +14,7 @@ from base.VersionManager import VersionManager
 from module.Config import Config
 from module.Localizer.Localizer import Localizer
 from module.TaskTracker import get_current_tracker
+from module.ErrorLogger import ErrorLogger
 
 class TaskRequester(Base):
 
@@ -116,7 +117,7 @@ class TaskRequester(Base):
     # 获取客户端
     @classmethod
     @lru_cache(maxsize = None)
-    def get_client(cls, url: str, key: str, format: Base.APIFormat, timeout: int) -> openai.OpenAI | genai.Client | anthropic.Anthropic:
+    def get_client(cls, url: str, key: str, format: Base.APIFormat, timeout: int, max_retries: int) -> openai.OpenAI | genai.Client | anthropic.Anthropic:
         # connect (连接超时):
         #   建议值: 5.0 到 10.0 秒。
         #   解释: 建立到 LLM API 服务器的 TCP 连接。通常这个过程很快，但网络波动时可能需要更长时间。设置过短可能导致在网络轻微抖动时连接失败。
@@ -136,60 +137,88 @@ class TaskRequester(Base):
             return openai.OpenAI(
                 base_url = url,
                 api_key = key,
-                timeout = httpx.Timeout(
-                    read = timeout,
-                    pool = 8.00,
-                    write = 8.00,
-                    connect = 8.00,
-                ),
-                max_retries = 1,
+                http_client = httpx.Client(timeout = httpx.Timeout(None)),
+                timeout = httpx.Timeout(None),
+                max_retries = max(0, int(max_retries)) if isinstance(max_retries, int) else 1,
             )
         elif format == Base.APIFormat.GOOGLE:
             # https://github.com/googleapis/python-genai
-            return genai.Client(
-                api_key = key,
-                http_options = types.HttpOptions(
-                    base_url = url,
-                    timeout = timeout * 1000,
-                    headers = {
-                        "User-Agent": f"LinguaGacha/{VersionManager.get().get_version()} (https://github.com/neavo/LinguaGacha)",
-                    },
-                ),
-            )
+            http_options: dict = {
+                "base_url": url,
+                "headers": {
+                    "User-Agent": f"LinguaGacha/{VersionManager.get().get_version()} (https://github.com/neavo/LinguaGacha)",
+                },
+            }
+            return genai.Client(api_key = key, http_options = types.HttpOptions(**http_options))
         elif format == Base.APIFormat.ANTHROPIC:
             return anthropic.Anthropic(
                 base_url = url,
                 api_key = key,
-                timeout = httpx.Timeout(
-                    read = timeout,
-                    pool = 8.00,
-                    write = 8.00,
-                    connect = 8.00,
-                ),
-                max_retries = 1,
+                timeout = httpx.Timeout(None),
+                max_retries = max(0, int(max_retries)) if isinstance(max_retries, int) else 1,
             )
         else:
             return openai.OpenAI(
                 base_url = url,
                 api_key = key,
-                timeout = httpx.Timeout(
-                    read = timeout,
-                    pool = 8.00,
-                    write = 8.00,
-                    connect = 8.00,
-                ),
-                max_retries = 1,
+                http_client = httpx.Client(timeout = httpx.Timeout(None)),
+                timeout = httpx.Timeout(None),
+                max_retries = max(0, int(max_retries)) if isinstance(max_retries, int) else 1,
             )
+
+    @staticmethod
+    def _is_retryable_stream_exception(e: Exception) -> bool:
+        msg = str(e).lower()
+        retry_markers = (
+            "incomplete chunked read",
+            "peer closed connection",
+            "connection reset",
+            "connection aborted",
+            "winerror 10053",
+            "winerror 10054",
+            "winerror 10060",
+            "timed out",
+            "timeout",
+            "stream stalled",
+            "readerror",
+            "readtimeout",
+            "connecttimeout",
+            "ssl",
+        )
+        if any(m in msg for m in retry_markers):
+            return True
+
+        for exc_name in ("APITimeoutError", "APIConnectionError", "RateLimitError"):
+            exc_type = getattr(openai, exc_name, None)
+            if exc_type is not None and isinstance(e, exc_type):
+                return True
+
+        for exc_type in (httpx.ReadError, httpx.ReadTimeout, httpx.ConnectTimeout, httpx.ConnectError):
+            if isinstance(e, exc_type):
+                return True
+
+        return False
 
     # 获取无超时客户端 - 用于阿里云百炼 DeepSeek 模型流式输出
     @classmethod
     @lru_cache(maxsize = None)
-    def get_client_no_timeout(cls, url: str, key: str) -> openai.OpenAI:
+    def get_client_no_timeout(cls, url: str, key: str, max_retries: int) -> openai.OpenAI:
         return openai.OpenAI(
             base_url = url,
             api_key = key,
+            http_client = httpx.Client(timeout = httpx.Timeout(None)),
             timeout = httpx.Timeout(None),  # 完全禁用超时
-            max_retries = 1,
+            max_retries = max(0, int(max_retries)) if isinstance(max_retries, int) else 1,
+        )
+
+    @classmethod
+    def new_client_no_timeout(cls, url: str, key: str, max_retries: int) -> openai.OpenAI:
+        return openai.OpenAI(
+            base_url = url,
+            api_key = key,
+            http_client = httpx.Client(timeout = httpx.Timeout(None)),
+            timeout = httpx.Timeout(None),
+            max_retries = max(0, int(max_retries)) if isinstance(max_retries, int) else 1,
         )
 
     # 判断是否为阿里云百炼 DeepSeek 模型
@@ -211,7 +240,7 @@ class TaskRequester(Base):
         )
 
     # 发起请求
-    def request(self, messages: list[dict]) -> tuple[bool, str, int, int]:
+    def request(self, messages: list[dict], task_id: str = None) -> tuple[bool, str, int, int]:
         args: dict[str, float] = {}
         if self.platform.get("top_p_custom_enable") == True:
             args["top_p"] = self.platform.get("top_p")
@@ -230,12 +259,14 @@ class TaskRequester(Base):
             skip, response_think, response_result, input_tokens, output_tokens = self.request_dashscope_deepseek_streaming(
                 messages,
                 args,
+                task_id,
             )
         # NVIDIA Build DeepSeek 模型使用专门的流式输出方法
         elif self.is_nvidia_deepseek():
             skip, response_think, response_result, input_tokens, output_tokens = self.request_nvidia_deepseek_streaming(
                 messages,
                 args,
+                task_id,
             )
         elif self.platform.get("api_format") == Base.APIFormat.SAKURALLM:
             skip, response_think, response_result, input_tokens, output_tokens = self.request_sakura(
@@ -269,7 +300,7 @@ class TaskRequester(Base):
         args: dict = args | {
             "model": self.platform.get("model"),
             "messages": messages,
-            "max_tokens": max(512, self.config.token_threshold),
+            "max_tokens": max(512, self.config.output_token_threshold),
             "extra_headers": {
                 "User-Agent": f"LinguaGacha/{VersionManager.get().get_version()} (https://github.com/neavo/LinguaGacha)"
             }
@@ -289,6 +320,7 @@ class TaskRequester(Base):
                     key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
+                    max_retries = self.config.request_max_retries,
                 )
 
             # 发起请求
@@ -328,7 +360,7 @@ class TaskRequester(Base):
         args: dict = args | {
             "model": self.platform.get("model"),
             "messages": messages,
-            "max_tokens": max(4 * 1024, self.config.token_threshold),
+            "max_tokens": max(4 * 1024, self.config.output_token_threshold),
             "extra_headers": {
                 "User-Agent": f"LinguaGacha/{VersionManager.get().get_version()} (https://github.com/neavo/LinguaGacha)"
             }
@@ -340,7 +372,7 @@ class TaskRequester(Base):
             __class__.RE_O_SERIES.search(self.platform.get("model")) is not None
         ):
             args.pop("max_tokens", None)
-            args["max_completion_tokens"] = max(4 * 1024, self.config.token_threshold)
+            args["max_completion_tokens"] = max(4 * 1024, self.config.output_token_threshold)
 
         # 思考模式切换 - QWEN3
         if __class__.RE_QWEN3.search(self.platform.get("model")) is not None:
@@ -364,6 +396,7 @@ class TaskRequester(Base):
                     key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
+                    max_retries = self.config.request_max_retries,
                 )
 
             # 发起请求
@@ -404,7 +437,7 @@ class TaskRequester(Base):
     # 生成请求参数
     def generate_google_args(self, messages: list[dict[str, str]], thinking: bool, args: dict[str, float]) -> dict[str, str | int | float]:
         args: dict = args | {
-            "max_output_tokens": max(4 * 1024, self.config.token_threshold),
+            "max_output_tokens": max(4 * 1024, self.config.output_token_threshold),
             "safety_settings": (
                 types.SafetySetting(
                     category = "HARM_CATEGORY_HARASSMENT",
@@ -456,6 +489,7 @@ class TaskRequester(Base):
                     key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
+                    max_retries = self.config.request_max_retries,
                 )
 
             # 发起请求
@@ -533,6 +567,7 @@ class TaskRequester(Base):
                     key = current_key,
                     format = self.platform.get("api_format"),
                     timeout = self.config.request_timeout,
+                    max_retries = self.config.request_max_retries,
                 )
 
             # 发起请求
@@ -577,7 +612,7 @@ class TaskRequester(Base):
         request_args.update({
             "model": self.platform.get("model"),
             "messages": messages,
-            "max_tokens": max(32 * 1024, self.config.token_threshold),  # ModelScope 支持 32768
+            "max_tokens": max(32 * 1024, self.config.output_token_threshold),  # ModelScope 支持 32768
             "stream": True,  # 强制启用流式输出
             "stream_options": {"include_usage": True},  # 包含 token 使用统计
             "extra_body": {"enable_thinking": True},  # 强制启用思考模式
@@ -588,12 +623,13 @@ class TaskRequester(Base):
         return request_args
 
     # 阿里云百炼 DeepSeek 模型专用流式输出请求
-    def request_dashscope_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float]) -> tuple[bool, str, str, int, int]:
+    def request_dashscope_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float], task_id: str = None) -> tuple[bool, str, str, int, int]:
         # 导入流式统计追踪器
         from module.StreamingStats import StreamingStats
         
         # 生成任务 ID 用于追踪
-        task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
+        if not task_id:
+            task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
         
         # 获取当前活跃的 TaskTracker（如果有）
         tracker = get_current_tracker()
@@ -611,85 +647,174 @@ class TaskRequester(Base):
                 client: openai.OpenAI = __class__.get_client_no_timeout(
                     url = self.platform.get("api_url"),
                     key = current_key,
+                    max_retries = self.config.request_max_retries,
                 )
 
-            # 发起流式请求
-            stream = client.chat.completions.create(
-                **self.generate_dashscope_deepseek_args(messages, args)
-            )
-
-            # 收集流式输出内容
-            response_think = ""  # 思考过程
-            response_result = ""  # 完整回复
+            response_think = ""
+            response_result = ""
             input_tokens = 0
             output_tokens = 0
-            is_thinking = True  # 当前是否在思考阶段
             chunk_count = 0
 
-            for chunk in stream:
-                chunk_count += 1
+            stall_seconds = self.config.stream_stall_timeout_seconds if isinstance(self.config.stream_stall_timeout_seconds, int) and self.config.stream_stall_timeout_seconds > 0 else 120
+            retry_attempts = self.config.stream_retry_attempts if isinstance(self.config.stream_retry_attempts, int) and self.config.stream_retry_attempts > 0 else 3
+            backoff_seconds = self.config.stream_retry_backoff_seconds if isinstance(self.config.stream_retry_backoff_seconds, int) and self.config.stream_retry_backoff_seconds >= 0 else 2
 
-                # 检查是否有选择内容
-                if not chunk.choices:
-                    # 最后一个 chunk 包含 usage 信息
-                    if hasattr(chunk, "usage") and chunk.usage is not None:
-                        try:
-                            input_tokens = int(chunk.usage.prompt_tokens)
-                        except Exception:
-                            pass
-                        try:
-                            output_tokens = int(chunk.usage.completion_tokens)
-                        except Exception:
-                            pass
-                    continue
+            for attempt in range(retry_attempts):
+                response_think = ""
+                response_result = ""
+                input_tokens = 0
+                output_tokens = 0
+                chunk_count = 0
+                is_thinking = True
 
-                delta = chunk.choices[0].delta
+                try:
+                    import time
 
-                # 收集思考内容 (reasoning_content)
-                if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-                    response_think += delta.reasoning_content
-                    # 更新追踪器状态
+                    abort_event = threading.Event()
+                    last_chunk_ts = {"t": None}
+                    first_chunk_ts = {"t": None}
+                    stalled = {"flag": False}
+
+                    stream_client = client if attempt == 0 else __class__.new_client_no_timeout(
+                        url=self.platform.get("api_url"),
+                        key=current_key,
+                        max_retries=self.config.request_max_retries,
+                    )
+
+                    stream = stream_client.chat.completions.create(
+                        **self.generate_dashscope_deepseek_args(messages, args)
+                    )
+
                     if task_id:
                         StreamingStats.update_task(
                             task_id=task_id,
-                            status="thinking",
+                            status="waiting",
                             think_chars=len(response_think),
                             reply_chars=len(response_result),
                             chunks=chunk_count,
                         )
-                    # 同步更新 TaskTracker
                     if tracker and task_id:
                         tracker.update_task(
                             task_id,
-                            status="thinking",
+                            status="waiting",
                             think_chars=len(response_think),
                             reply_chars=len(response_result),
                             chunks=chunk_count,
                         )
 
-                # 收集回复内容 (content)
-                if hasattr(delta, "content") and delta.content is not None:
-                    if is_thinking:
-                        is_thinking = False
-                    response_result += delta.content
-                    # 更新追踪器状态
-                    if task_id:
-                        StreamingStats.update_task(
-                            task_id=task_id,
-                            status="receiving",
-                            think_chars=len(response_think),
-                            reply_chars=len(response_result),
-                            chunks=chunk_count,
-                        )
-                    # 同步更新 TaskTracker
-                    if tracker and task_id:
-                        tracker.update_task(
-                            task_id,
-                            status="receiving",
-                            think_chars=len(response_think),
-                            reply_chars=len(response_result),
-                            chunks=chunk_count,
-                        )
+                    def watchdog() -> None:
+                        while not abort_event.is_set():
+                            t = last_chunk_ts["t"]
+                            if t is not None and time.time() - t > stall_seconds:
+                                stalled["flag"] = True
+                                try:
+                                    close = getattr(stream, "close", None)
+                                    close() if callable(close) else None
+                                except Exception:
+                                    pass
+                                abort_event.set()
+                                break
+                            time.sleep(1.0)
+
+                    threading.Thread(target=watchdog, daemon=True).start()
+
+                    try:
+                        for chunk in stream:
+                            now = time.time()
+                            last_chunk_ts["t"] = now
+                            if first_chunk_ts["t"] is None:
+                                first_chunk_ts["t"] = now
+                            if stalled["flag"]:
+                                raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
+
+                            chunk_count += 1
+
+                            if not chunk.choices:
+                                if hasattr(chunk, "usage") and chunk.usage is not None:
+                                    try:
+                                        input_tokens = int(chunk.usage.prompt_tokens)
+                                    except Exception:
+                                        pass
+                                    try:
+                                        output_tokens = int(chunk.usage.completion_tokens)
+                                    except Exception:
+                                        pass
+                                continue
+
+                            delta = chunk.choices[0].delta
+
+                            if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                                response_think += delta.reasoning_content
+                                if task_id:
+                                    StreamingStats.update_task(
+                                        task_id=task_id,
+                                        status="thinking",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                                if tracker and task_id:
+                                    tracker.update_task(
+                                        task_id,
+                                        status="thinking",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+
+                            if hasattr(delta, "content") and delta.content is not None:
+                                if is_thinking:
+                                    is_thinking = False
+                                response_result += delta.content
+                                if task_id:
+                                    StreamingStats.update_task(
+                                        task_id=task_id,
+                                        status="receiving",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                                if tracker and task_id:
+                                    tracker.update_task(
+                                        task_id,
+                                        status="receiving",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                    finally:
+                        abort_event.set()
+                    if stalled["flag"]:
+                        raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
+                    break
+                except openai.InternalServerError as e:
+                    if attempt < retry_attempts - 1 and getattr(e, "status_code", None) == 504:
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[阿里百炼 DeepSeek] 请求超时 (504)，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    raise e
+                except openai.APIStatusError as e:
+                    status = getattr(e, "status_code", None)
+                    if attempt < retry_attempts - 1 and status in {408, 429, 500, 502, 503, 504, 522, 524}:
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[阿里百炼 DeepSeek] 服务端异常 ({status})，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    raise e
+                except Exception as e:
+                    msg = str(e).lower()
+                    if attempt < retry_attempts - 1 and __class__._is_retryable_stream_exception(e):
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[阿里百炼 DeepSeek] 连接中断，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    self.error(f"[阿里百炼-DeepSeek] 流式传输中断: {e}")
+                    raise e
 
             # 完成任务追踪
             if task_id:
@@ -699,6 +824,10 @@ class TaskRequester(Base):
             # 清理思考内容
             response_think = __class__.RE_LINE_BREAK.sub("\n", response_think.strip())
             response_result = response_result.strip()
+            if response_result == "" and response_think:
+                if re.search(r'^\s*\{\s*["\']?\d+["\']?\s*[:：]', response_think, flags=re.MULTILINE) or \
+                   re.search(r'^\s*(?:\[|\(|【)?\s*\d+\s*(?:\]|\)|】)?\s*[:：.．、\-]', response_think, flags=re.MULTILINE):
+                    response_result = response_think.strip()
 
         except openai.PermissionDeniedError as e:
             # 完成任务追踪（失败）
@@ -716,8 +845,9 @@ class TaskRequester(Base):
                 self.error(f"[致命错误] 封禁原因: {error_msg}")
                 self.error(f"[致命错误] 翻译任务已紧急停止！请检查 API Key 状态或联系服务提供商。")
                 self.error(f"")
-                # 立即触发翻译停止事件
-                self.emit(Base.Event.TRANSLATION_STOP, {})
+                from module.Engine.Engine import Engine
+                if Engine.get().get_status() == Base.TaskStatus.TRANSLATING:
+                    self.emit(Base.Event.TRANSLATION_REQUIRE_STOP, {})
             else:
                 self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
@@ -730,7 +860,7 @@ class TaskRequester(Base):
             
             # 所有 Key 被封禁的异常（理论上不会触发，因为第一个封禁就停止了）
             self.error(f"[致命] {e}")
-            self.emit(Base.Event.TRANSLATION_STOP, {})
+            self.emit(Base.Event.TRANSLATION_REQUIRE_STOP, {})
             return True, None, None, None, None
 
         except Exception as e:
@@ -740,6 +870,19 @@ class TaskRequester(Base):
                 StreamingStats.remove_task(task_id)
             
             self.error(f"{Localizer.get().log_task_fail}", e)
+            
+            # 详细错误日志
+            ErrorLogger.log(
+                error_type="ConnectionError",
+                message=str(e),
+                context={
+                    "platform": self.platform,
+                    "messages": messages,
+                    "error_trace": str(e),
+                    "partial_think": response_think if 'response_think' in locals() else "",
+                    "partial_result": response_result if 'response_result' in locals() else "",
+                }
+            )
             return True, None, None, None, None
 
         return False, response_think, response_result, input_tokens, output_tokens
@@ -750,7 +893,7 @@ class TaskRequester(Base):
         request_args.update({
             "model": self.platform.get("model"),
             "messages": messages,
-            "max_tokens": max(16384, self.config.token_threshold),  # NVIDIA Build 限制 16384
+            "max_tokens": max(16384, self.config.output_token_threshold),  # NVIDIA Build 限制 16384
             "stream": True,  # 强制启用流式输出
             "stream_options": {"include_usage": True},  # 包含 token 使用统计
             "extra_body": {"chat_template_kwargs": {"thinking": True}},  # NVIDIA 专用思考模式启用方式
@@ -761,12 +904,13 @@ class TaskRequester(Base):
         return request_args
 
     # NVIDIA Build DeepSeek 模型专用流式输出请求
-    def request_nvidia_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float]) -> tuple[bool, str, str, int, int]:
+    def request_nvidia_deepseek_streaming(self, messages: list[dict[str, str]], args: dict[str, float], task_id: str = None) -> tuple[bool, str, str, int, int]:
         # 导入流式统计追踪器
         from module.StreamingStats import StreamingStats
         
         # 生成任务 ID 用于追踪
-        task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
+        if not task_id:
+            task_id = StreamingStats.generate_task_id() if StreamingStats.is_enabled() else ""
         
         # 获取当前活跃的 TaskTracker（如果有）
         tracker = get_current_tracker()
@@ -784,85 +928,173 @@ class TaskRequester(Base):
                 client: openai.OpenAI = __class__.get_client_no_timeout(
                     url = self.platform.get("api_url"),
                     key = current_key,
+                    max_retries = self.config.request_max_retries,
                 )
 
-            # 发起流式请求
-            stream = client.chat.completions.create(
-                **self.generate_nvidia_deepseek_args(messages, args)
-            )
-
-            # 收集流式输出内容
-            response_think = ""  # 思考过程
-            response_result = ""  # 完整回复
+            response_think = ""
+            response_result = ""
             input_tokens = 0
             output_tokens = 0
-            is_thinking = True  # 当前是否在思考阶段
             chunk_count = 0
 
-            for chunk in stream:
-                chunk_count += 1
+            stall_seconds = self.config.stream_stall_timeout_seconds if isinstance(self.config.stream_stall_timeout_seconds, int) and self.config.stream_stall_timeout_seconds > 0 else 120
+            retry_attempts = self.config.stream_retry_attempts if isinstance(self.config.stream_retry_attempts, int) and self.config.stream_retry_attempts > 0 else 3
+            backoff_seconds = self.config.stream_retry_backoff_seconds if isinstance(self.config.stream_retry_backoff_seconds, int) and self.config.stream_retry_backoff_seconds >= 0 else 2
 
-                # 检查是否有选择内容
-                if not chunk.choices:
-                    # 最后一个 chunk 包含 usage 信息
-                    if hasattr(chunk, "usage") and chunk.usage is not None:
-                        try:
-                            input_tokens = int(chunk.usage.prompt_tokens)
-                        except Exception:
-                            pass
-                        try:
-                            output_tokens = int(chunk.usage.completion_tokens)
-                        except Exception:
-                            pass
-                    continue
+            for attempt in range(retry_attempts):
+                response_think = ""
+                response_result = ""
+                input_tokens = 0
+                output_tokens = 0
+                chunk_count = 0
+                is_thinking = True
 
-                delta = chunk.choices[0].delta
+                try:
+                    import time
 
-                # 收集思考内容 (reasoning_content)
-                if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-                    response_think += delta.reasoning_content
-                    # 更新追踪器状态
+                    abort_event = threading.Event()
+                    last_chunk_ts = {"t": None}
+                    first_chunk_ts = {"t": None}
+                    stalled = {"flag": False}
+
+                    stream_client = client if attempt == 0 else __class__.new_client_no_timeout(
+                        url=self.platform.get("api_url"),
+                        key=current_key,
+                        max_retries=self.config.request_max_retries,
+                    )
+
+                    stream = stream_client.chat.completions.create(
+                        **self.generate_nvidia_deepseek_args(messages, args),
+                    )
+
                     if task_id:
                         StreamingStats.update_task(
                             task_id=task_id,
-                            status="thinking",
+                            status="waiting",
                             think_chars=len(response_think),
                             reply_chars=len(response_result),
                             chunks=chunk_count,
                         )
-                    # 同步更新 TaskTracker
                     if tracker and task_id:
                         tracker.update_task(
                             task_id,
-                            status="thinking",
+                            status="waiting",
                             think_chars=len(response_think),
                             reply_chars=len(response_result),
                             chunks=chunk_count,
                         )
 
-                # 收集回复内容 (content)
-                if hasattr(delta, "content") and delta.content is not None:
-                    if is_thinking:
-                        is_thinking = False
-                    response_result += delta.content
-                    # 更新追踪器状态
-                    if task_id:
-                        StreamingStats.update_task(
-                            task_id=task_id,
-                            status="receiving",
-                            think_chars=len(response_think),
-                            reply_chars=len(response_result),
-                            chunks=chunk_count,
-                        )
-                    # 同步更新 TaskTracker
-                    if tracker and task_id:
-                        tracker.update_task(
-                            task_id,
-                            status="receiving",
-                            think_chars=len(response_think),
-                            reply_chars=len(response_result),
-                            chunks=chunk_count,
-                        )
+                    def watchdog() -> None:
+                        while not abort_event.is_set():
+                            t = last_chunk_ts["t"]
+                            if t is not None and time.time() - t > stall_seconds:
+                                stalled["flag"] = True
+                                try:
+                                    close = getattr(stream, "close", None)
+                                    close() if callable(close) else None
+                                except Exception:
+                                    pass
+                                abort_event.set()
+                                break
+                            time.sleep(1.0)
+
+                    threading.Thread(target=watchdog, daemon=True).start()
+
+                    try:
+                        for chunk in stream:
+                            now = time.time()
+                            last_chunk_ts["t"] = now
+                            if first_chunk_ts["t"] is None:
+                                first_chunk_ts["t"] = now
+                            if stalled["flag"]:
+                                raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
+
+                            chunk_count += 1
+
+                            if not chunk.choices:
+                                if hasattr(chunk, "usage") and chunk.usage is not None:
+                                    try:
+                                        input_tokens = int(chunk.usage.prompt_tokens)
+                                    except Exception:
+                                        pass
+                                    try:
+                                        output_tokens = int(chunk.usage.completion_tokens)
+                                    except Exception:
+                                        pass
+                                continue
+
+                            delta = chunk.choices[0].delta
+
+                            if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                                response_think += delta.reasoning_content
+                                if task_id:
+                                    StreamingStats.update_task(
+                                        task_id=task_id,
+                                        status="thinking",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                                if tracker and task_id:
+                                    tracker.update_task(
+                                        task_id,
+                                        status="thinking",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+
+                            if hasattr(delta, "content") and delta.content is not None:
+                                if is_thinking:
+                                    is_thinking = False
+                                response_result += delta.content
+                                if task_id:
+                                    StreamingStats.update_task(
+                                        task_id=task_id,
+                                        status="receiving",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                                if tracker and task_id:
+                                    tracker.update_task(
+                                        task_id,
+                                        status="receiving",
+                                        think_chars=len(response_think),
+                                        reply_chars=len(response_result),
+                                        chunks=chunk_count,
+                                    )
+                    finally:
+                        abort_event.set()
+                    if stalled["flag"]:
+                        raise TimeoutError(f"stream stalled: no chunk for {stall_seconds}s")
+                    break
+                except openai.InternalServerError as e:
+                    if attempt < retry_attempts - 1 and getattr(e, "status_code", None) == 504:
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[NVIDIA DeepSeek] 请求超时 (504)，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    raise e
+                except openai.APIStatusError as e:
+                    status = getattr(e, "status_code", None)
+                    if attempt < retry_attempts - 1 and status in {408, 429, 500, 502, 503, 504, 522, 524}:
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[NVIDIA DeepSeek] 服务端异常 ({status})，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    raise e
+                except Exception as e:
+                    msg = str(e).lower()
+                    if attempt < retry_attempts - 1 and __class__._is_retryable_stream_exception(e):
+                        import time
+                        wait_time = backoff_seconds * (attempt + 1)
+                        self.warning(f"[NVIDIA DeepSeek] 连接中断，{wait_time}秒后重试 ({attempt + 1}/{retry_attempts})...")
+                        time.sleep(wait_time)
+                        continue
+                    raise e
 
             # 完成任务追踪
             if task_id:
@@ -872,6 +1104,10 @@ class TaskRequester(Base):
             # 清理思考内容
             response_think = __class__.RE_LINE_BREAK.sub("\n", response_think.strip())
             response_result = response_result.strip()
+            if response_result == "" and response_think:
+                if re.search(r'^\s*\{\s*["\']?\d+["\']?\s*[:：]', response_think, flags=re.MULTILINE) or \
+                   re.search(r'^\s*(?:\[|\(|【)?\s*\d+\s*(?:\]|\)|】)?\s*[:：.．、\-]', response_think, flags=re.MULTILINE):
+                    response_result = response_think.strip()
 
         except openai.PermissionDeniedError as e:
             # 完成任务追踪（失败）
@@ -889,8 +1125,9 @@ class TaskRequester(Base):
                 self.error(f"[致命错误] 封禁原因: {error_msg}")
                 self.error(f"[致命错误] 翻译任务已紧急停止！请检查 API Key 状态或联系服务提供商。")
                 self.error(f"")
-                # 立即触发翻译停止事件
-                self.emit(Base.Event.TRANSLATION_STOP, {})
+                from module.Engine.Engine import Engine
+                if Engine.get().get_status() == Base.TaskStatus.TRANSLATING:
+                    self.emit(Base.Event.TRANSLATION_REQUIRE_STOP, {})
             else:
                 self.error(f"{Localizer.get().log_task_fail}", e)
             return True, None, None, None, None
@@ -903,7 +1140,7 @@ class TaskRequester(Base):
             
             # 所有 Key 被封禁的异常
             self.error(f"[致命] {e}")
-            self.emit(Base.Event.TRANSLATION_STOP, {})
+            self.emit(Base.Event.TRANSLATION_REQUIRE_STOP, {})
             return True, None, None, None, None
 
         except Exception as e:
@@ -913,6 +1150,19 @@ class TaskRequester(Base):
                 StreamingStats.remove_task(task_id)
             
             self.error(f"{Localizer.get().log_task_fail}", e)
+
+            # 详细错误日志
+            ErrorLogger.log(
+                error_type="ConnectionError",
+                message=str(e),
+                context={
+                    "platform": self.platform,
+                    "messages": messages,
+                    "error_trace": str(e),
+                    "partial_think": response_think if 'response_think' in locals() else "",
+                    "partial_result": response_result if 'response_result' in locals() else "",
+                }
+            )
             return True, None, None, None, None
 
         return False, response_think, response_result, input_tokens, output_tokens

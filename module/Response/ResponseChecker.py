@@ -160,6 +160,11 @@ class ResponseChecker(Base):
 
             # 原文不为空而译文为空时，判断为错误翻译
             if src != "" and dst == "":
+                # 如果原文极短（<=2字符）或者是纯符号，允许译文为空，不计入容错计数
+                if len(src) <= 2 or TextHelper.all_punctuation(src):
+                    checks.append(__class__.Error.NONE)
+                    continue
+
                 if allow_empty_missing and empty_missing_count < __class__.LINE_COUNT_TOLERANCE:
                     empty_missing_count += 1
                     tolerated_empty_samples.append((i, src[:40], repr(dst_raw)))

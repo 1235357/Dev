@@ -89,13 +89,13 @@ class ResponseDecoder(Base):
         - 例子三格式：每个 JSON 对象都被单独的 ```jsonline\n...\n``` 包裹
         - 例子四/五格式：整体被 ```jsonline\n...\n``` 包裹，内部是标准 JSONLINE
         """
+        self.debug(f"DEBUG: Original response: {response[:100]}...")
         original = response
-        
         # 步骤1：处理每行单独被代码块包裹的情况（例子三格式）
         # 例如：```jsonline\n{"0": "译文"}\n```\n```jsonline\n{"1": "译文"}\n```
-        # 使用更激进的模式匹配
+        # 使用更激进的模式匹配 - 改为使用非贪婪匹配，避免因 } 字符截断
         single_block_pattern = re.compile(
-            r'```(?:jsonline|json|jsonl)?\s*\n?\s*(\{[^}]*\})\s*\n?\s*```',
+            r'```(?:jsonline|json|jsonl)?\s*\n?(.*?)\n?```',
             flags=re.IGNORECASE | re.DOTALL
         )
         
@@ -103,9 +103,13 @@ class ResponseDecoder(Base):
             # 检查是否存在多个单独包裹的代码块
             matches = single_block_pattern.findall(response)
             if len(matches) > 1:
-                # 提取所有 JSON 对象，组合成标准 JSONLINE
-                response = "\n".join(matches)
-                self._used_codeblock_cleanup = True
+                # 提取所有内容，组合成标准 JSONLINE
+                # 注意：matches 包含的是代码块内部的内容
+                # 过滤空内容
+                valid_matches = [m.strip() for m in matches if m.strip()]
+                if valid_matches:
+                    response = "\n".join(valid_matches)
+                    self._used_codeblock_cleanup = True
         
         # 步骤2：处理整体代码块包裹（例子四/五格式）
         # 例如：```jsonline\n{"0": "译文"}\n{"1": "译文"}\n```
@@ -137,7 +141,12 @@ class ResponseDecoder(Base):
             cleaned_lines.append(line)
         response = '\n'.join(cleaned_lines)
         
-        # 步骤5：合并跨行的 JSON 对象
+        # 步骤5：修复重复的开始花括号
+        # 处理模型输出如：{"{"{"6":"..."}  →  {"6":"..."}
+        # 这种情况是模型在每行开头多输出了一个或多个 {
+        response = self._fix_duplicate_braces(response)
+        
+        # 步骤6：合并跨行的 JSON 对象
         # 处理模型将一个 JSON 对象拆分成多行的情况，例如：
         # {"0":
         # "译文内容"}
@@ -148,6 +157,48 @@ class ResponseDecoder(Base):
             self._used_codeblock_cleanup = True
         
         return response.strip()
+
+    def _fix_duplicate_braces(self, response: str) -> str:
+        """
+        修复重复的开始花括号
+        
+        处理模型输出如：
+            {"{"6":"..."}
+            {"{"{"{"7":"..."}  （多个重复）
+        
+        将其修复为：
+            {"6":"..."}
+            {"7":"..."}
+        
+        原因：某些模型在输出时会错误地在每行开头多添加一个或多个 {
+        """
+        lines = response.split('\n')
+        fixed_lines = []
+        fixed_count = 0
+        
+        # 模式：匹配行首的 {"{ 或 {"{"{ 等重复模式
+        # 即：{"{ 后面紧跟数字和引号
+        pattern = re.compile(r'^(\{")+\{("\d+"\s*:)')
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # 检测重复花括号模式
+            match = pattern.match(stripped)
+            if match:
+                # 找到重复，只保留最后一个 { 和后面的内容
+                fixed_line = '{' + match.group(2) + stripped[match.end():]
+                fixed_lines.append(fixed_line)
+                fixed_count += 1
+            else:
+                fixed_lines.append(line)
+        
+        result = '\n'.join(fixed_lines)
+        
+        if fixed_count > 0:
+            self.debug(f"[预处理] 修复了 {fixed_count} 行重复的开始花括号")
+        
+        return result
 
     def _merge_split_json_lines(self, response: str) -> str:
         """
@@ -212,10 +263,54 @@ class ResponseDecoder(Base):
         
         return result
 
+    def _extract_indexed_text_lines(self, text: str) -> dict[int, str]:
+        if not text:
+            return {}
+
+        indexed: dict[int, str] = {}
+        hits = 0
+
+        patterns = (
+            re.compile(r'^\s*(?:[-*]\s*)?(?:\[|\(|【)?\s*(\d{1,6})\s*(?:\]|\)|】)?\s*[:：.．、\-]\s*(.*?)\s*$'),
+            re.compile(r'^\s*(?:[-*]\s*)?(?:\[|\(|【)?\s*(\d{1,6})\s*(?:\]|\)|】)?\s*[)\]]\s*(.*?)\s*$'),
+        )
+
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            m = None
+            for p in patterns:
+                m = p.match(line)
+                if m:
+                    break
+            if not m:
+                continue
+
+            try:
+                idx = int(m.group(1))
+            except Exception:
+                continue
+
+            value = (m.group(2) or "").rstrip("\n").strip()
+            indexed[idx] = value
+            hits += 1
+
+        if hits < 5 or 0 not in indexed:
+            return {}
+
+        max_idx = max(indexed.keys())
+        if max_idx > 20000:
+            return {}
+
+        return indexed
+
     # 解析文本
     def decode(self, response: str, response_think: str = "") -> tuple[list[str], list[dict[str, str]]]:
         dsts: list[str] = []
         glossarys: list[dict[str, str]] = []
+        preserve_trailing_empty = False
         
         # 重置状态标记
         self._used_thinking_fallback = False
@@ -270,6 +365,51 @@ class ResponseDecoder(Base):
                     depth -= 1
                     if depth == 0 and start is not None:
                         objects.append(text[start : i + 1])
+                        start = None
+                    continue
+
+            return objects
+
+        def extract_json_list_strings(text: str) -> list[str]:
+            """从混杂文本中提取疑似 JSON 列表字符串"""
+            objects: list[str] = []
+            depth = 0
+            start = None
+            in_string = False
+            escape = False
+
+            for i, ch in enumerate(text):
+                if depth == 0:
+                    if ch == "[":
+                        depth = 1
+                        start = i
+                        in_string = False
+                        escape = False
+                    continue
+
+                # depth > 0
+                if in_string:
+                    if escape:
+                        escape = False
+                    elif ch == "\\":
+                        escape = True
+                    elif ch == '"':
+                        in_string = False
+                    continue
+
+                # not in string
+                if ch == '"':
+                    in_string = True
+                    continue
+                if ch in "[{":
+                    depth += 1
+                    continue
+                if ch in "]}":
+                    depth -= 1
+                    if depth == 0 and start is not None:
+                        # 确保闭合符号匹配
+                        if ch == "]" and text[start] == "[":
+                            objects.append(text[start : i + 1])
                         start = None
                     continue
 
@@ -336,11 +476,14 @@ class ResponseDecoder(Base):
                 # 清理译文行尾的换行符
                 value = value.rstrip("\n")
                 prev = indexed_dsts.get(idx)
-                if prev is None:
-                    indexed_dsts[idx] = value
-                    return
-                if isinstance(prev, str) and prev.strip() == "" and value.strip() != "":
-                    indexed_dsts[idx] = value
+                # print(f"DEBUG: merge_indexed idx={idx}, value={value}, prev={prev}")
+                
+                # 策略更新：优先使用后出现的翻译结果（覆盖旧值）
+                # 这有助于处理以下情况：
+                # 1. 提示词泄漏（Example 在前，Real 在后 -> Real 覆盖 Example）
+                # 2. 模型自我修正（Draft 在前，Final 在后 -> Final 覆盖 Draft）
+                # 3. 重复输出（无害）
+                indexed_dsts[idx] = value
 
             # 翻译结果（JSONLINE 单对象）
             if len(json_data) == 1:
@@ -366,8 +509,9 @@ class ResponseDecoder(Base):
         if len(indexed_dsts) > 0:
             max_idx = max(indexed_dsts.keys())
             dsts = [indexed_dsts.get(i, "") for i in range(max_idx + 1)]
+            preserve_trailing_empty = True
 
-        # 按行解析失败时，尝试按照普通 JSON 字典进行解析
+        # 按行解析失败时，尝试按照普通 JSON 字典或列表进行解析
         if len(dsts) == 0:
             json_data = repair.loads(response)
             if isinstance(json_data, dict):
@@ -385,6 +529,26 @@ class ResponseDecoder(Base):
                 if len(indexed_dsts) > 0:
                     max_idx = max(indexed_dsts.keys())
                     dsts = [indexed_dsts.get(i, "") for i in range(max_idx + 1)]
+                    preserve_trailing_empty = True
+            
+            # 新增：处理 JSON 列表格式 ["译文1", "译文2", ...]
+            elif isinstance(json_data, list):
+                self.debug(f"[解析策略] 检测到 JSON 列表格式，尝试解析")
+                # 列表隐式包含顺序信息，直接作为有序结果
+                list_dsts = []
+                valid_list = True
+                for item in json_data:
+                    if isinstance(item, str):
+                        list_dsts.append(item.rstrip("\n"))
+                    elif isinstance(item, (int, float)):
+                        list_dsts.append(str(item))
+                    else:
+                        # 如果列表中包含复杂对象，可能不是简单的译文列表
+                        valid_list = False
+                        break
+                
+                if valid_list and len(list_dsts) > 0:
+                    dsts = list_dsts
 
         # 最终兜底：当输出混入多段 JSON / 符号混用导致逐行与整体解析都失败时，提取所有“疑似 JSON 对象”再解析
         # 目的：补救诸如同一行输出多个 {..}{..}、或 JSONLINE 被其他文本包裹等情况
@@ -437,12 +601,43 @@ class ResponseDecoder(Base):
             if len(indexed_dsts) > 0:
                 max_idx = max(indexed_dsts.keys())
                 dsts = [indexed_dsts.get(i, "") for i in range(max_idx + 1)]
+                preserve_trailing_empty = True
 
         # ========== 终极兜底：从思考内容中提取翻译结果 ==========
         # 当正式回复为空或解析失败，但思考内容包含大量 JSONLINE 时，尝试从思考内容中提取
         # 这是一种应急措施，会发出警告
+        if len(dsts) > 0 and preserve_trailing_empty and response_think and len(response_think) > 100:
+            thinking_indexed_dsts = self._extract_from_thinking(
+                response_think,
+                extract_json_object_strings,
+                safe_loads,
+                extract_json_list_strings,
+            )
+            if len(thinking_indexed_dsts) > 0:
+                try:
+                    max_idx = max(max(thinking_indexed_dsts.keys()), len(dsts) - 1)
+                except Exception:
+                    max_idx = len(dsts) - 1
+                if max_idx >= len(dsts):
+                    dsts = dsts + [""] * (max_idx + 1 - len(dsts))
+                filled = 0
+                for i in range(max_idx + 1):
+                    if i < len(dsts) and dsts[i].strip() != "":
+                        continue
+                    v = thinking_indexed_dsts.get(i)
+                    if isinstance(v, str) and v.strip() != "":
+                        dsts[i] = v
+                        filled += 1
+                if filled > 0:
+                    self._used_thinking_fallback = True
+
         if len(dsts) == 0 and response_think and len(response_think) > 100:
-            thinking_indexed_dsts = self._extract_from_thinking(response_think, extract_json_object_strings, safe_loads)
+            thinking_indexed_dsts = self._extract_from_thinking(
+                response_think, 
+                extract_json_object_strings, 
+                safe_loads,
+                extract_json_list_strings
+            )
             if len(thinking_indexed_dsts) > 0:
                 self._used_thinking_fallback = True
                 self.warning(
@@ -451,17 +646,40 @@ class ResponseDecoder(Base):
                 max_idx = max(thinking_indexed_dsts.keys())
                 dsts = [thinking_indexed_dsts.get(i, "") for i in range(max_idx + 1)]
 
+        # ========== 纯文本兜底：处理不遵循 JSON 格式的输出 ==========
+        # 当上述所有 JSON 解析都失败，且响应内容非空时，尝试直接按行分割
+        # 兼容 ModelScope/NVIDIA 等可能不遵循 JSONLINE 格式的模型
+        if len(dsts) == 0 and response.strip():
+            indexed_text = self._extract_indexed_text_lines(response)
+            if indexed_text:
+                max_idx = max(indexed_text.keys())
+                dsts = [indexed_text.get(i, "") for i in range(max_idx + 1)]
+                preserve_trailing_empty = True
+                self.warning(f"[兜底策略] JSON 解析失败，从纯文本序号行提取到 {len(dsts)} 行")
+            else:
+                plain_lines = response.strip().splitlines()
+                filtered_lines = []
+                for line in plain_lines:
+                    stripped = line.strip()
+                    if not stripped or stripped.startswith("```") or stripped.endswith("```"):
+                        continue
+                    filtered_lines.append(line)
+                
+                if len(filtered_lines) > 0:
+                    dsts = filtered_lines
+                    self.warning(f"[兜底策略] JSON 解析失败，回退到纯文本按行分割模式 (提取到 {len(dsts)} 行)")
+
         # ========== 空行压缩兜底：处理译文中的空行导致行数不一致 ==========
         # 当解析结果包含连续空字符串时，尝试压缩空行
         # 这是为了处理模型在空行位置输出 {"5": ""} 的情况
         if len(dsts) > 0:
             # 检查是否存在连续的空字符串（可能是空行被错误处理）
-            dsts = self._compact_empty_lines(dsts)
+            dsts = self._compact_empty_lines(dsts, preserve_trailing_empty = preserve_trailing_empty)
 
         # 返回默认值
         return dsts, glossarys
     
-    def _compact_empty_lines(self, dsts: list[str]) -> list[str]:
+    def _compact_empty_lines(self, dsts: list[str], preserve_trailing_empty: bool = False) -> list[str]:
         """
         压缩译文列表中不必要的空行
         
@@ -476,10 +694,11 @@ class ResponseDecoder(Base):
         if len(dsts) <= 1:
             return dsts
         
-        # 移除末尾的空字符串
-        while dsts and dsts[-1].strip() == "":
-            dsts.pop()
-            self._used_empty_line_cleanup = True
+        # 移除末尾的空字符串（通常是解析残留）
+        if preserve_trailing_empty == False:
+            while dsts and dsts[-1].strip() == "":
+                dsts.pop()
+                self._used_empty_line_cleanup = True
         
         # 压缩连续的空字符串
         result = []
@@ -495,12 +714,45 @@ class ResponseDecoder(Base):
         
         return result
     
+    def _remove_garbage_lines(self, dsts: list[str]) -> list[str]:
+        """
+        清理明显的垃圾行和重复行
+        """
+        if len(dsts) <= 1:
+            return dsts
+            
+        cleaned = []
+        prev_line = None
+        
+        for line in dsts:
+            stripped = line.strip()
+            
+            # 1. 跳过纯符号行 (长度<5且全是符号)
+            # 例如: "..." 或 "---"
+            if len(stripped) < 5 and not any(c.isalnum() for c in stripped) and \
+               not any('\u4e00' <= c <= '\u9fff' for c in stripped): # 简单的中文检查
+                 # 但要小心省略号 "……" 可能是合法的
+                 # 如果是 "……" 且原文有对应，则不能删。但在对齐阶段我们不知道原文对应。
+                 # 这里只删极短的纯ASCII符号?
+                 if all(ord(c) < 128 for c in stripped):
+                     continue
+            
+            # 2. 跳过重复行 (Stuttering)
+            # 例如: {"1": "Hello"} {"2": "Hello"}
+            if prev_line is not None and stripped == prev_line and stripped != "":
+                continue
+                
+            cleaned.append(line)
+            prev_line = stripped
+            
+        return cleaned
+
     def try_realign_to_sources(self, dsts: list[str], srcs: list[str]) -> list[str]:
         """
         尝试将译文列表重新对齐到原文列表
         
         当译文行数与原文行数不一致时，此方法会尝试智能对齐：
-        1. 如果译文行数 > 原文行数：尝试剔除多余的空行
+        1. 如果译文行数 > 原文行数：尝试剔除多余的空行、去重、合并拆分行
         2. 如果译文行数 < 原文行数：尝试在合适的位置补充空行
         3. 如果某行译文包含 \\n 且后续有连续空行：将该行拆分并填充
         
@@ -523,6 +775,18 @@ class ResponseDecoder(Base):
         # 如果行数已经一致，直接返回
         if src_count == dst_count:
             return dsts
+
+        # ========== 策略 -1：预处理去噪（重复行、纯符号行） ==========
+        # 如果译文行数 > 原文行数，先尝试清理明显的垃圾数据
+        if dst_count > src_count:
+            cleaned_dsts = self._remove_garbage_lines(dsts)
+            if len(cleaned_dsts) < dst_count:
+                dsts = cleaned_dsts
+                dst_count = len(dsts)
+                if dst_count == src_count:
+                    self._used_line_realignment = True
+                    self.warning(f"[行数重对齐] 清理垃圾/重复行后对齐：{len(dsts)} 行 -> {src_count} 行")
+                    return dsts
         
         # ========== 策略0A：处理某行译文包含 \n 且后续有连续空行的情况 ==========
         # 模型有时会把多行内容合并成一行（用 \n 连接），然后后续行输出空字符串
@@ -562,6 +826,44 @@ class ResponseDecoder(Base):
                 dsts = dsts_full_expand
                 dst_count = len(dsts)
         
+        # 策略1.5：如果译文行数 > 原文行数，尝试合并被拆分的行
+        if dst_count > src_count:
+            merged_dsts = self._try_merge_extra_lines(dsts, srcs)
+            
+            # 如果合并成功（完全对齐或有改善），更新 dsts
+            if len(merged_dsts) < dst_count:
+                dsts = merged_dsts
+                dst_count = len(dsts)
+                
+                if dst_count == src_count:
+                    self._used_line_realignment = True
+                    self.warning(
+                        f"[行数重对齐] 合并拆分行后对齐：{len(dsts)} 行 -> {src_count} 行"
+                    )
+                    return dsts
+
+            # 策略1.6：如果仍然 > 原文行数，尝试激进合并 (Aggressive Merge)
+            if dst_count > src_count:
+                aggressive_dsts = self._try_aggressive_merge(dsts, srcs)
+                if len(aggressive_dsts) < dst_count:
+                    dsts = aggressive_dsts
+                    dst_count = len(dsts)
+                    
+                    if dst_count == src_count:
+                        self._used_line_realignment = True
+                        self.warning(
+                            f"[行数重对齐] 激进合并后对齐：{len(dsts)} 行 -> {src_count} 行"
+                        )
+                        return dsts
+
+            # 策略1.7：如果仍然 > 原文行数，尝试强制截断 (Truncate)
+            # 作为最后的手段，如果多出的行在末尾，可能是幻觉
+            if dst_count > src_count:
+                truncated_dsts = self._try_truncate_extra_lines(dsts, srcs)
+                if len(truncated_dsts) == src_count:
+                    self._used_line_realignment = True
+                    return truncated_dsts
+
         # 识别原文中的空行位置
         src_empty_indices = set()
         src_non_empty_count = 0
@@ -839,11 +1141,266 @@ class ResponseDecoder(Base):
         
         return result
     
+    def _try_merge_extra_lines(self, dsts: list[str], srcs: list[str]) -> list[str]:
+        """
+        尝试合并多余的译文行
+        
+        当译文行数 > 原文行数时，可能是模型将长句拆分成了多行。
+        此方法尝试通过标点符号和语境判断，将拆分的行合并回去。
+        
+        Args:
+            dsts: 译文列表
+            srcs: 原文列表
+            
+        Returns:
+            合并后的译文列表
+        """
+        src_count = len(srcs)
+        dst_count = len(dsts)
+        diff = dst_count - src_count
+        
+        if diff <= 0:
+            return dsts
+            
+        # 标点符号集合（表示句子结束）
+        TERMINAL_PUNCTUATION = {'。', '！', '？', '…', '"', '”', '」', '』', '!', '?', '…', '.'}
+        
+        # 候选合并列表：(score, index)
+        # score 越高表示越应该与下一行合并
+        candidates = []
+        
+        for i in range(dst_count - 1):
+            current = dsts[i].strip()
+            next_line = dsts[i+1].strip()
+            
+            if not current or not next_line:
+                continue
+                
+            # 基础分数：优先合并短行 (反比于长度)
+            # 假设两行加起来不超过 50 字的更可能是被拆分的短句或对话
+            total_len = len(current) + len(next_line)
+            score = 100.0 / (total_len + 1.0)
+            
+            # 规则1：当前行不以结束标点结尾 (最强烈的信号)
+            if current[-1] not in TERMINAL_PUNCTUATION:
+                score += 500.0
+                
+            # 规则2：下一行以标点开头（如逗号）
+            if next_line.startswith(('，', ',', '、', '。', '.')):
+                score += 200.0
+                
+            # 规则3：当前行以 " 说：" 等对话引导结尾
+            if current.endswith(('说：', '道：', '问道：', 'says:', 'said:')):
+                score += 100.0
+            
+            # 过滤掉分数过低的候选项（避免强行合并两个无关的长句）
+            if score < 10.0:
+                continue
+                
+            candidates.append((score, i))
+        
+        # 按分数排序（从高到低）
+        # 如果分数相同，优先合并靠前的（保持阅读顺序）
+        candidates.sort(key=lambda x: (x[0], -x[1]), reverse=True)
+        
+        # 执行合并
+        merged_indices = set()
+        merges_done = 0
+        
+        # 贪心策略：优先合并分数高的
+        # 为了避免合并冲突（如 A+B 和 B+C），我们每次合并后要小心
+        # 但这里为了简单，我们先收集所有互不冲突的高分合并
+        
+        final_merges = []
+        
+        for score, idx in candidates:
+            if merges_done >= diff:
+                break
+                
+            # 检查冲突
+            if idx in merged_indices or (idx + 1) in merged_indices:
+                continue
+                
+            merged_indices.add(idx)
+            merged_indices.add(idx + 1)
+            final_merges.append(idx)
+            merges_done += 1
+            
+        # 如果还没达到目标，可能需要多轮合并（即 A+B+C）
+        # 但目前的逻辑只支持两两合并。为了稳健，我们先只做这一轮。
+        # 如果还需要合并，可以在下一次递归或迭代中处理（但当前架构不支持递归调用此方法）
+        # 所以如果 diff 很大，一次可能不够。
+        # 改进：如果 merges_done < diff，我们可以尝试放宽条件或允许连续合并
+        
+        if not final_merges:
+            return dsts
+            
+        final_merges.sort()
+        
+        result = []
+        i = 0
+        while i < dst_count:
+            if i in final_merges:
+                # 合并 i 和 i+1
+                current = dsts[i]
+                next_line = dsts[i+1]
+                
+                # 智能连接
+                if current and next_line and \
+                   current[-1].isascii() and next_line[0].isascii() and \
+                   not current.endswith(' ') and not next_line.startswith(' '):
+                    current += " " + next_line
+                else:
+                    current += next_line
+                    
+                result.append(current)
+                i += 2 # 跳过下一行
+            else:
+                result.append(dsts[i])
+                i += 1
+                
+        # 递归调用以处理剩余差异（如果还需要合并）
+        # 例如：A+B, C+D -> 结果可能还需要继续合并
+        if len(result) > src_count and len(result) < dst_count:
+             return self._try_merge_extra_lines(result, srcs)
+             
+        if len(result) != dst_count:
+            self.debug(
+                f"[行合并] 尝试合并拆分行：{dst_count} 行 -> {len(result)} 行 (目标 {src_count} 行)"
+            )
+            
+        return result
+
+    def _try_aggressive_merge(self, dsts: list[str], srcs: list[str]) -> list[str]:
+        """
+        激进合并策略
+        当常规合并无法满足要求时，尝试更激进的合并：
+        1. 强制合并极短的行 (< 10 字符)
+        2. 强制合并非标点结尾的行 (即使下一行看起来也是新的句子)
+        """
+        src_count = len(srcs)
+        dst_count = len(dsts)
+        diff = dst_count - src_count
+        
+        if diff <= 0:
+            return dsts
+            
+        # 候选列表：(score, index)
+        candidates = []
+        
+        TERMINAL_PUNCTUATION = {'。', '！', '？', '…', '"', '”', '」', '』', '!', '?', '…', '.'}
+        
+        for i in range(dst_count - 1):
+            current = dsts[i].strip()
+            next_line = dsts[i+1].strip()
+            
+            if not current or not next_line:
+                continue
+                
+            score = 0
+            
+            # 规则1：极短行 (非常可能是误拆分)
+            if len(current) < 10:
+                score += 1000
+            elif len(current) < 20:
+                score += 500
+                
+            # 规则2：不以标点结尾
+            if current[-1] not in TERMINAL_PUNCTUATION:
+                score += 300
+                
+            # 规则3：下一行以小写字母开头 (英文)
+            if next_line[0].islower():
+                score += 200
+                
+            # 规则4：两行加起来长度适中 (类似原文长度)
+            # 这里简单处理，假设合并后不超过 100 字是安全的
+            if len(current) + len(next_line) < 100:
+                score += 100
+                
+            if score > 0:
+                candidates.append((score, i))
+                
+        # 按分数排序
+        candidates.sort(key=lambda x: (x[0], -x[1]), reverse=True)
+        
+        merged_indices = set()
+        final_merges = []
+        merges_done = 0
+        
+        for score, idx in candidates:
+            if merges_done >= diff:
+                break
+            if idx in merged_indices or (idx + 1) in merged_indices:
+                continue
+                
+            merged_indices.add(idx)
+            merged_indices.add(idx + 1)
+            final_merges.append(idx)
+            merges_done += 1
+            
+        if not final_merges:
+            return dsts
+            
+        final_merges.sort()
+        result = []
+        i = 0
+        while i < dst_count:
+            if i in final_merges:
+                current = dsts[i]
+                next_line = dsts[i+1]
+                if current and next_line and \
+                   current[-1].isascii() and next_line[0].isascii() and \
+                   not current.endswith(' ') and not next_line.startswith(' '):
+                    current += " " + next_line
+                else:
+                    current += next_line
+                result.append(current)
+                i += 2
+            else:
+                result.append(dsts[i])
+                i += 1
+                
+        # 递归检查是否还需要合并
+        if len(result) > src_count and len(result) < dst_count:
+            return self._try_aggressive_merge(result, srcs)
+            
+        return result
+
+    def _try_truncate_extra_lines(self, dsts: list[str], srcs: list[str]) -> list[str]:
+        """
+        尝试截断多余的译文行
+        
+        当所有合并策略都失败，且译文行数仍多于原文行数时，
+        如果是尾部多出的行（可能是模型幻觉或过度生成），则尝试截断。
+        
+        Args:
+            dsts: 译文列表
+            srcs: 原文列表
+            
+        Returns:
+            截断后的译文列表
+        """
+        src_count = len(srcs)
+        dst_count = len(dsts)
+        
+        if dst_count <= src_count:
+            return dsts
+            
+        # 截断
+        truncated = dsts[:src_count]
+        
+        self.warning(
+            f"[行数重对齐] 强制截断多余行：{dst_count} 行 -> {src_count} 行 (丢弃末尾 {dst_count - src_count} 行)"
+        )
+        return truncated
+
     def _extract_from_thinking(
         self,
         thinking_content: str,
         extract_json_object_strings,
         safe_loads,
+        extract_json_list_strings=None,
     ) -> dict[int, str]:
         """
         从思考内容中提取 JSONLINE 格式的翻译结果
@@ -852,10 +1409,34 @@ class ResponseDecoder(Base):
         {"48": "他试图追溯记忆。追溯之中，猛地倒吸一口凉气。"}
         我们选择：{"49": "就在这时，脚步声响起。"}
         
+        或者输出列表格式：
+        ["译文1", "译文2"]
+        
         这个方法尝试识别并提取这些内容。
         """
         indexed_dsts: dict[int, str] = {}
         
+        # 方法0：尝试提取 JSON 列表（如果有提供提取函数）
+        # 列表通常是完整的翻译块，优先级较高
+        if extract_json_list_strings:
+            for list_str in extract_json_list_strings(thinking_content):
+                json_data = safe_loads(list_str)
+                if isinstance(json_data, list):
+                    # 验证列表内容是否主要是字符串
+                    valid_strings = 0
+                    temp_dsts = {}
+                    for i, item in enumerate(json_data):
+                        if isinstance(item, str):
+                            temp_dsts[i] = item.rstrip("\n")
+                            valid_strings += 1
+                        elif isinstance(item, (int, float)):
+                            temp_dsts[i] = str(item)
+                            valid_strings += 1
+                    
+                    # 如果列表大部分是有效的，且包含的内容比当前已有的更多，则采纳
+                    if valid_strings > 0 and len(temp_dsts) > len(indexed_dsts):
+                         indexed_dsts = temp_dsts
+
         # 方法1：使用通用的 JSON 对象提取函数
         for obj_str in extract_json_object_strings(thinking_content):
             json_data = safe_loads(obj_str)
@@ -916,5 +1497,10 @@ class ResponseDecoder(Base):
                                     indexed_dsts[idx] = v
                     except (ValueError, TypeError, Exception):
                         pass
+
+        if len(indexed_dsts) == 0:
+            indexed_text = self._extract_indexed_text_lines(thinking_content)
+            if indexed_text:
+                indexed_dsts = indexed_text
         
         return indexed_dsts

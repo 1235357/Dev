@@ -47,6 +47,10 @@ class ExpertSettingsPage(QWidget, Base):
         self.add_widget_deduplication_in_bilingual(scroll_area_vbox, config, window)
         self.add_widget_write_translated_name_fields_to_file(scroll_area_vbox, config, window)
         self.add_widget_result_checker_retry_count_threshold(scroll_area_vbox, config, window)
+        self.add_widget_request_max_retries(scroll_area_vbox, config, window)
+        self.add_widget_stream_stall_timeout_seconds(scroll_area_vbox, config, window)
+        self.add_widget_stream_retry_attempts(scroll_area_vbox, config, window)
+        self.add_widget_stream_retry_backoff_seconds(scroll_area_vbox, config, window)
 
         # 填充
         scroll_area_vbox.addStretch(1)
@@ -182,6 +186,28 @@ class ExpertSettingsPage(QWidget, Base):
             )
         )
 
+    # 自动移除前后缀代码段
+    def add_widget_auto_process_prefix_suffix_preserved_text(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SwitchButtonCard) -> None:
+            widget.get_switch_button().setChecked(
+                config.auto_process_prefix_suffix_preserved_text
+            )
+
+        def checked_changed(widget: SwitchButtonCard) -> None:
+            config = Config().load()
+            config.auto_process_prefix_suffix_preserved_text = widget.get_switch_button().isChecked()
+            config.save()
+
+        parent.addWidget(
+            SwitchButtonCard(
+                title = Localizer.get().expert_settings_page_auto_process_prefix_suffix_preserved_text,
+                description = Localizer.get().expert_settings_page_auto_process_prefix_suffix_preserved_text_desc,
+                init = init,
+                checked_changed = checked_changed,
+            )
+        )
+
     # 结果检查 - 重试次数达到阈值
     def add_widget_result_checker_retry_count_threshold(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
 
@@ -201,5 +227,85 @@ class ExpertSettingsPage(QWidget, Base):
                 description = Localizer.get().expert_settings_page_result_checker_retry_count_threshold_desc,
                 init = init,
                 checked_changed = checked_changed,
+            )
+        )
+
+    def add_widget_request_max_retries(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(0, 9999999)
+            widget.get_spin_box().setValue(config.request_max_retries)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.request_max_retries = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_request_max_retries_title,
+                description = Localizer.get().expert_settings_page_request_max_retries_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
+    def add_widget_stream_stall_timeout_seconds(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(1, 9999999)
+            widget.get_spin_box().setValue(config.stream_stall_timeout_seconds)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.stream_stall_timeout_seconds = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_stream_stall_timeout_seconds_title,
+                description = Localizer.get().expert_settings_page_stream_stall_timeout_seconds_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
+    def add_widget_stream_retry_attempts(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(1, 9999999)
+            widget.get_spin_box().setValue(config.stream_retry_attempts)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.stream_retry_attempts = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_stream_retry_attempts_title,
+                description = Localizer.get().expert_settings_page_stream_retry_attempts_desc,
+                init = init,
+                value_changed = value_changed,
+            )
+        )
+
+    def add_widget_stream_retry_backoff_seconds(self, parent: QLayout, config: Config, window: FluentWindow) -> None:
+
+        def init(widget: SpinCard) -> None:
+            widget.get_spin_box().setRange(0, 9999999)
+            widget.get_spin_box().setValue(config.stream_retry_backoff_seconds)
+
+        def value_changed(widget: SpinCard) -> None:
+            config = Config().load()
+            config.stream_retry_backoff_seconds = widget.get_spin_box().value()
+            config.save()
+
+        parent.addWidget(
+            SpinCard(
+                title = Localizer.get().expert_settings_page_stream_retry_backoff_seconds_title,
+                description = Localizer.get().expert_settings_page_stream_retry_backoff_seconds_desc,
+                init = init,
+                value_changed = value_changed,
             )
         )

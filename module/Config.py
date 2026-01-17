@@ -35,10 +35,12 @@ class Config():
     scale_factor: str = ""
 
     # BasicSettingsPage
-    token_threshold: int = 384
+    input_token_threshold: int = 1024
+    output_token_threshold: int = 4096
     max_workers: int = 0
     rpm_threshold: int = 0
-    request_timeout: int = 120
+    request_timeout: int = 0
+    request_max_retries: int = 1
     max_round: int = 16
 
     # ExpertSettingsPage
@@ -48,7 +50,11 @@ class Config():
     deduplication_in_trans: bool = True
     deduplication_in_bilingual: bool = True
     write_translated_name_fields_to_file: bool = True
+    auto_process_prefix_suffix_preserved_text: bool = True
     result_checker_retry_count_threshold: bool = False
+    stream_stall_timeout_seconds: int = 120
+    stream_retry_attempts: int = 3
+    stream_retry_backoff_seconds: int = 2
 
     # ProjectPage
     source_language: BaseLanguage.Enum = BaseLanguage.Enum.JA
@@ -132,7 +138,11 @@ class Config():
         self.deduplication_in_trans: bool = True
         self.deduplication_in_bilingual: bool = True
         self.write_translated_name_fields_to_file: bool = True
+        self.auto_process_prefix_suffix_preserved_text: bool = True
         self.result_checker_retry_count_threshold: bool = False
+        self.stream_stall_timeout_seconds: int = 120
+        self.stream_retry_attempts: int = 3
+        self.stream_retry_backoff_seconds: int = 2
 
         # TextPreservePage
         self.text_preserve_enable: bool = False

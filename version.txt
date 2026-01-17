@@ -1,1 +1,1 @@
-v0.29.2-Multi-Platform-API-Rotation
+v0.40.2_ModelScope_&_NVIDIA_Experimental

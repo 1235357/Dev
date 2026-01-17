@@ -157,7 +157,7 @@ class TextProcessor(Base):
         if self.config.clean_ruby == False:
             return src
         else:
-            return RubyCleaner.clean(src)
+            return RubyCleaner.clean(src, self.item.get_text_type())
 
     # 自动修复
     def auto_fix(self, src: str, dst: str) -> str:
@@ -276,7 +276,8 @@ class TextProcessor(Base):
                 pass
             else:
                 # 处理前后缀代码段
-                src = self.prefix_suffix_process(i, src, text_type)
+                if self.config.auto_process_prefix_suffix_preserved_text:
+                    src = self.prefix_suffix_process(i, src, text_type)
 
                 # 如果处理后的文本为空
                 if src == "":

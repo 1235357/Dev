@@ -1,37 +1,12 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+/.venv
+/uv.lock
+__pycache__
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Output
-output/
-
-# Virtual environments
-venv/
-env/
-pyvenv/
-
-# Testing
-.pytest_cache/
-.tox/
-coverage/
+/*log*
+/*debug*
+/*input*
+/*output*
+/*.json
+/*.xlsx
+/resource/config.json
+/resource/expert_config.json

@@ -64,17 +64,22 @@ class APITester(Base):
         TaskRequester.reset()
 
         # 开始测试
-        requester = TaskRequester(config, platform, 0)
         for key in platform.get("api_key"):
             self.print("")
             self.info(f"{Localizer.get().platofrm_tester_key} - {key}")
             self.info(f"{Localizer.get().platofrm_tester_messages}\n{messages}")
+            platform_for_key = platform.copy()
+            platform_for_key["api_key"] = [key]
+            requester = TaskRequester(config, platform_for_key, 0)
             skip, response_think, response_result, _, _ = requester.request(messages)
 
             # 提取回复内容
             if skip == True:
                 failure.append(key)
                 self.warning(Localizer.get().log_api_test_fail)
+                if TaskRequester.is_blacklisted(key):
+                    self.warning(f"{Localizer.get().platofrm_tester_result_failure}\n{key}")
+                    break
             elif response_think == "":
                 success.append(key)
                 self.info(f"{Localizer.get().platofrm_tester_response_result}\n{response_result}")
